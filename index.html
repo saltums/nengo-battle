@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>年号ならべバトル（仮）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0e11;--panel:#15171c;--panel2:#1d2027;--line:#2a2d36;--ink:#eceef2;--sub:#8b909b;--acc:#c8ff4d;--accd:rgba(200,255,77,.1);--ok:#4dd08a;--ng:#ff6b6b;--gem:#6fd3ff}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:"Noto Sans JP",system-ui,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden;user-select:none;-webkit-user-select:none}
+.mono{font-family:"JetBrains Mono",monospace}
+#app{height:100dvh;max-width:520px;margin:0 auto;display:flex;flex-direction:column;padding:12px 14px calc(12px + env(safe-area-inset-bottom));gap:10px}
+#app.wide{max-width:none;padding:20px 28px}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:900;background:var(--acc);color:#0d0e11;width:100%;letter-spacing:.03em}
+.btn:disabled{opacity:.3}
+.btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:9px 12px;font-size:13px;width:auto;border-radius:10px}
+input{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--panel);font:inherit;font-size:17px;padding:13px 14px;color:var(--ink);outline:none;user-select:text;-webkit-user-select:text}
+input:focus{border-color:var(--acc)}
+input::placeholder{color:#565b66}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}
+.label{font-size:11px;letter-spacing:.14em;color:var(--acc)}
+.sub{font-size:12.5px;color:var(--sub)}
+.grow{flex:1;min-height:0}
+.col{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;align-items:center;gap:10px}
+.center{text-align:center}
+.gem{color:var(--gem);font-weight:700}
+.err{color:var(--ng);font-size:13px;min-height:1.3em;text-align:center}
+/* home */
+.home{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.home h1{font-size:clamp(26px,8vw,34px);font-weight:900;text-align:center;line-height:1.25}
+.home h1 small{display:block;font-size:12px;font-weight:500;color:var(--sub);letter-spacing:.2em;margin-bottom:6px}
+.demo{font-size:11px;color:var(--sub);text-align:center;border:1px dashed var(--line);border-radius:10px;padding:6px}
+/* lobby */
+.big{font-size:44px;font-weight:900;line-height:1}
+.rank{display:flex;flex-direction:column;gap:4px}
+.rank div{display:flex;justify-content:space-between;font-size:14px;padding:6px 10px;border-radius:8px;background:var(--panel)}
+.rank div.me{outline:1px solid var(--acc)}
+.pulse{animation:pu 1.2s ease-in-out infinite}
+@keyframes pu{50%{opacity:.45}}
+/* bet */
+.vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;text-align:center}
+.vs .n{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vs .b{font-size:54px;font-weight:900;color:var(--gem);line-height:1.1}
+.okb{font-size:12px;padding:2px 10px;border-radius:99px;border:1px solid var(--line);color:var(--sub);display:inline-block}
+.okb.on{border-color:var(--ok);color:var(--ok)}
+.pm{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* play */
+.top{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--sub);flex:none}
+.dots b{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--sub);margin-left:3px}
+.dots b.on{background:var(--acc);border-color:var(--acc)}
+.turn{flex:none;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700}
+.turn .mine{color:var(--acc)}
+.timer{font-size:15px}
+.timer.hot{color:var(--ng)}
+.panel{flex:none;height:112px;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;gap:4px;overflow:hidden}
+.panel.pick{border-color:var(--acc);background:var(--accd)}
+.panel.ok{border-color:var(--ok)}
+.panel.ng{border-color:var(--ng)}
+.panel .who{font-size:11px;color:var(--sub)}
+.panel .ttl{font-size:17px;font-weight:900;line-height:1.3}
+.panel .txt{font-size:12.5px;line-height:1.5;color:#cfd2d8}
+.tl{flex:1;min-height:0;display:flex;flex-direction:column;gap:2px}
+.tr{flex:1 1 0;min-height:0;max-height:38px;display:flex;align-items:center;gap:10px;padding:0 10px;border:1px solid var(--line);border-radius:7px;font-size:clamp(11px,3.3vw,13.5px);overflow:hidden;background:var(--panel)}
+.tr .y{width:40px;flex:none;color:var(--sub);font-size:.95em}
+.tr .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr.ok{border-color:var(--ok)}
+.tr.ng{border-color:var(--ng)}
+.tr.pre{border:2px solid var(--acc);background:var(--accd);color:var(--acc);font-weight:700}
+.slot{flex:.45 1 0;min-height:0;max-height:20px;border:1px dashed #3a3e49;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#5d626e;overflow:hidden;line-height:1}
+.hand{flex:none;display:grid;gap:6px;height:76px}
+.hc{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:4px;font-size:clamp(10.5px,3vw,12px);font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;overflow:hidden}
+.hc.on{border:2px solid var(--acc);color:var(--acc)}
+.hc.off{opacity:.55}
+.hc.back{background:repeating-linear-gradient(45deg,var(--panel2) 0 6px,var(--panel) 6px 12px)}
+/* result */
+.res{font-size:42px;font-weight:900;text-align:center}
+.res.win{color:var(--acc)}
+.res.lose{color:var(--ng)}
+.miss{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:12px}
+.miss div{border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--panel);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.miss b{color:var(--acc);margin-right:6px}
+/* teacher */
+.thead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex:none;flex-wrap:wrap}
+.code{font-size:clamp(48px,9vw,96px);font-weight:700;letter-spacing:.12em;color:var(--acc);line-height:1}
+.plist{flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));grid-auto-rows:48px;gap:8px;overflow:hidden;align-content:start}
+.pl{display:grid;grid-template-columns:24px minmax(0,1fr) 62px 44px 62px 44px;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:0 10px;font-size:15px}
+.pl.off{opacity:.4}
+.pl .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .st{font-size:11px;color:var(--sub);text-align:center}
+.pl .st.play{color:var(--acc)}
+.pl .st.wait{color:var(--gem)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="config.js"></script>
+<script src="cards.js"></script>
+<script>
+"use strict";
+/* ========== 設定（ルールの数字はここで変えられます） ========== */
+const RULE={hand:4,lineMax:15,winsNeeded:2,turnSec:30,betSec:30,lockSec:3,roundGapSec:4,voidSec:60,startGems:10};
+
+/* ========== 小道具 ========== */
+const $=s=>document.querySelector(s), app=$('#app');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SS={get(k){try{return JSON.parse(sessionStorage.getItem(k))}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+const rid=n=>Array.from({length:n},()=>'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random()*31)]).join('');
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const clone=v=>v==null?null:JSON.parse(JSON.stringify(v));
+
+/* ========== カード ========== */
+const CARDS={};let IDS=[];
+function parseCSV(t){const rows=[];let row=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}else if(c==='"')q=true;else if(c===','){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x!==''))rows.push(row);row=[]}else f+=c}row.push(f);if(row.some(x=>x!==''))rows.push(row);return rows}
+function loadCards(){parseCSV(window.CARDS_CSV||'').slice(1).forEach(r=>{const id='c'+r[0].trim(),year=parseInt(r[3],10);if(!r[1]||isNaN(year))return;CARDS[id]={id,title:r[1].trim(),text:(r[2]||'').trim(),year,scope:(r[4]||'').trim()}});IDS=Object.keys(CARDS)}
+
+/* ========== 通信（デモ用：同じブラウザのタブ同士） ========== */
+function makeLocal(){
+  const KEY='nengo-battle-db',subs=new Set();let pend=false;
+  const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}};
+  const seg=p=>p.split('/').filter(Boolean);
+  const getIn=(d,p)=>{let c=d;for(const k of seg(p)){if(c==null||typeof c!=='object')return null;c=c[k]}return c===undefined?null:c};
+  const clean=v=>{if(v===null||v===undefined)return null;if(Array.isArray(v)){const a=v.map(clean);return a.length?a:null}if(typeof v==='object'){const o={};for(const k in v){const c=clean(v[k]);if(c!==null)o[k]=c}return Object.keys(o).length?o:null}return v};
+  const setIn=(d,p,v)=>{const s=seg(p);let c=d;for(let i=0;i<s.length-1;i++){if(c[s[i]]==null||typeof c[s[i]]!=='object')c[s[i]]={};c=c[s[i]]}v=clean(v);if(v===null)delete c[s[s.length-1]];else c[s[s.length-1]]=v};
+  const fire=()=>{if(pend)return;pend=true;setTimeout(()=>{pend=false;const d=load();[...subs].forEach(s=>{if(subs.has(s))s.cb(clone(getIn(d,s.path)))})},0)};
+  const save=d=>{localStorage.setItem(KEY,JSON.stringify(d));fire()};
+  addEventListener('storage',e=>{if(e.key===KEY)fire()});
+  localStorage.setItem('nengo-battle-test','1');
+  return{demo:true,now:()=>Date.now(),
+    get:async p=>clone(getIn(load(),p)),
+    set:async(p,v)=>{const d=load();setIn(d,p,v);save(d)},
+    update:async(p,o)=>{const d=load();for(const k in o)setIn(d,p+'/'+k,o[k]);save(d)},
+    tx:async(p,fn)=>{const d=load();const r=fn(clone(getIn(d,p)));if(r===undefined)return{committed:false};setIn(d,p,r);save(d);return{committed:true}},
+    on:(p,cb)=>{const s={path:p,cb};subs.add(s);setTimeout(()=>{if(subs.has(s))cb(clone(getIn(load(),p)))},0);return()=>subs.delete(s)}};
+}
+/* ========== 通信（本番用：Firebase Realtime Database） ========== */
+function loadScript(src){return new Promise((ok,ng)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>ng(new Error('load '+src));document.head.appendChild(s)})}
+async function makeFirebase(cfg){
+  const v='10.12.2',base='https://www.gstatic.com/firebasejs/'+v+'/';
+  await loadScript(base+'firebase-app-compat.js');await loadScript(base+'firebase-database-compat.js');
+  firebase.initializeApp(cfg);const db=firebase.database();let off=0;
+  db.ref('.info/serverTimeOffset').on('value',s=>{off=s.val()||0});
+  return{demo:false,now:()=>Date.now()+off,
+    get:async p=>(await db.ref(p).get()).val(),
+    set:(p,v)=>db.ref(p).set(v),
+    update:(p,o)=>db.ref(p).update(o),
+    tx:async(p,fn)=>{const r=await db.ref(p).transaction(fn,undefined,false);return{committed:r.committed}},
+    on:(p,cb)=>{const r=db.ref(p),h=r.on('value',s=>cb(s.val()));return()=>r.off('value',h)}};
+}
+let DB;
+
+/* ========== 状態 ========== */
+const S={role:null,code:null,uid:null,name:'',meta:undefined,players:{},seen:{},assign:null,mid:null,match:null,oppSeen:0,waiting:false,sel:null,closeArm:false,homeErr:''};
+let unsubs=[],munsubs=[],busy={},lastBeat=0,lastQ=0,lastKey='',lastTurnStart=0;
+const R=()=>'rooms/'+S.code;
+const me=()=>S.players[S.uid];
+const other=(m,u)=>m.ids[0]===u?m.ids[1]:m.ids[0];
+function norm(m){m.deck=m.deck||[];m.line=m.line||[];m.hands=m.hands||{};m.miss=m.miss||{};m.ok=m.ok||{};m.bet=m.bet||{};m.wins=m.wins||{};m.ids.forEach(u=>{m.hands[u]=m.hands[u]||[];m.miss[u]=m.miss[u]||{};m.wins[u]=m.wins[u]||0;m.ok[u]=!!m.ok[u];m.bet[u]=m.bet[u]||1});return m}
+async function once(key,fn){if(busy[key])return;busy[key]=true;try{await fn()}catch(e){console.error(key,e)}finally{busy[key]=false}}
+
+/* ========== 対戦のルール（データの書きかえ） ========== */
+function pass(m,mover){m.turn=other(m,mover);m.turnStart=DB.now();m.pick=null;m.pickAt=null}
+function endRound(m,winner){m.phase='roundEnd';m.rw=winner||'draw';m.rEnd=DB.now();m.pick=null;m.pickAt=null;m.firstOut=false;if(winner)m.wins[winner]=(m.wins[winner]||0)+1}
+function resolve(m,mover){
+  const opp=other(m,mover),empty=m.hands[mover].length===0;
+  if(m.firstOut)return endRound(m,empty?null:m.first);
+  if(empty){if(mover===m.first&&m.hands[opp].length===1){m.firstOut=true;return pass(m,mover)}return endRound(m,mover)}
+  if(m.line.length>=RULE.lineMax)return endRound(m,null);
+  pass(m,mover);
+}
+function deal(m){
+  const d=shuffle(IDS);m.line=[d.pop()];m.hands={};m.ids.forEach(u=>{m.hands[u]=d.splice(0,RULE.hand)});m.deck=d;
+  m.first=m.round?other(m,m.first):m.ids[Math.floor(Math.random()*2)];m.round=(m.round||0)+1;
+  m.turn=m.first;m.turnStart=DB.now();m.pick=null;m.pickAt=null;m.last=null;m.firstOut=false;m.phase='play';
+}
+const mpath=()=>R()+'/matches/'+S.mid;
+const txMatch=fn=>DB.tx(mpath(),m=>{if(!m)return m;norm(m);return fn(m)});
+
+function ensureMatch(){if(!S.assign||S.match)return;const a=S.assign,ids=[S.uid,a.opp].sort();
+  once('mk',()=>DB.tx(mpath(),m=>{if(m)return undefined;const o={ids,names:{},bet:{},ok:{},wins:{},phase:'bet',betStart:DB.now(),round:0};
+    o.names[S.uid]=S.name;o.names[a.opp]=(S.players[a.opp]||{}).n||'あいて';ids.forEach(u=>{o.bet[u]=1;o.ok[u]=false;o.wins[u]=0});return o}))}
+function setBet(n){const g=(me()||{}).g||1;n=Math.max(1,Math.min(g,n));txMatch(m=>{if(m.phase!=='bet')return undefined;m.bet[S.uid]=n;m.ids.forEach(u=>m.ok[u]=false);return m})}
+function okBet(){txMatch(m=>{if(m.phase!=='bet')return undefined;m.ok[S.uid]=true;return m})}
+function startMatch(timeout){once('start',()=>txMatch(m=>{if(m.phase!=='bet')return undefined;const both=m.ids.every(u=>m.ok[u]);if(!both){if(!timeout)return undefined;m.ids.forEach(u=>m.bet[u]=1)}deal(m);return m}))}
+function pickCard(c){txMatch(m=>{if(m.phase!=='play'||m.turn!==S.uid||m.hands[S.uid].indexOf(c)<0)return undefined;m.pick=c;m.pickAt=DB.now();return m});S.sel=null}
+function place(g){const c=S.match.pick,u=S.uid;once('place',()=>txMatch(m=>{
+  if(m.phase!=='play'||m.turn!==u||m.pick!==c)return undefined;const h=m.hands[u],i=h.indexOf(c);if(i<0)return undefined;h.splice(i,1);
+  const y=CARDS[c].year,L=m.line,ok=(g===0||CARDS[L[g-1]].year<=y)&&(g>=L.length||y<=CARDS[L[g]].year);
+  let pos=g;if(!ok){pos=L.findIndex(x=>CARDS[x].year>y);if(pos<0)pos=L.length}L.splice(pos,0,c);
+  if(!ok){if(m.deck.length)h.push(m.deck.pop());m.miss[u][c]=true}
+  m.last={u,c,ok,at:DB.now()};resolve(m,u);return m}));S.sel=null}
+function timeoutTurn(T,ts){once('to',()=>txMatch(m=>{if(m.phase!=='play'||m.turn!==T||m.turnStart!==ts)return undefined;if(m.deck.length)m.hands[T].push(m.deck.pop());m.last={u:T,to:true,at:DB.now()};resolve(m,T);return m}))}
+function nextRound(){once('next',()=>txMatch(m=>{if(m.phase!=='roundEnd')return undefined;const w=m.ids.find(u=>m.wins[u]>=RULE.winsNeeded);if(w){m.phase='done';m.winner=w}else deal(m);return m}))}
+function voidMatch(){once('void',()=>txMatch(m=>{if(m.phase==='done'||m.phase==='void')return undefined;m.phase='void';return m}))}
+function settle(){const m=S.match,mid=S.mid,u=S.uid,opp=other(m,u);
+  once('settle',()=>DB.tx(R()+'/players/'+u,p=>{if(!p)return p;if(p.ls===mid)return undefined;
+    if(m.phase==='done'){if(m.winner===u){p.g=(p.g||0)+m.bet[opp];p.w=(p.w||0)+1;p.ld=m.bet[opp]}else{p.g=Math.max(0,(p.g||0)-m.bet[u]);p.l=(p.l||0)+1;p.ld=-m.bet[u]}}else p.ld=0;
+    p.ls=mid;return p}))}
+async function leaveMatch(){const m=S.match;if(m)SS.set('nb-last',other(m,S.uid));
+  await DB.tx(R()+'/mm',mm=>{mm=mm||{};if(mm.a)delete mm.a[S.uid];return mm});DB.update(R()+'/players/'+S.uid,{st:'idle'});S.sel=null}
+
+/* ========== 相手さがし ========== */
+function queueTick(){const u=S.uid,lastOpp=SS.get('nb-last')||'';let got=null;
+  once('q',()=>DB.tx(R()+'/mm',mm=>{mm=mm||{};const q=mm.q=mm.q||{},a=mm.a=mm.a||{};got=null;if(a[u])return undefined;const now=DB.now();
+    Object.keys(q).forEach(k=>{if(now-q[k].t>12000||a[k])delete q[k]});
+    const others=Object.keys(q).filter(k=>k!==u);let cand=others.filter(k=>k!==lastOpp&&q[k].last!==u);
+    const since=(q[u]&&q[u].since)||now;if(!cand.length&&others.length&&now-since>6000)cand=others;
+    if(cand.length){const o=cand.sort((x,y)=>q[x].since-q[y].since)[0],mid='m'+rid(8);delete q[o];delete q[u];a[u]={mid,opp:o};a[o]={mid,opp:u};got=o;return mm}
+    q[u]={t:now,since,last:lastOpp};return mm}))}
+function startWait(){if(((me()||{}).g||0)<1)return;S.waiting=true;lastQ=0;DB.update(R()+'/players/'+S.uid,{st:'wait'});render()}
+function stopWait(){S.waiting=false;DB.tx(R()+'/mm',mm=>{mm=mm||{};if(mm.q)delete mm.q[S.uid];return mm});DB.update(R()+'/players/'+S.uid,{st:'idle'});render()}
+
+/* ========== 部屋に入る・出る ========== */
+function clearSubs(){unsubs.forEach(f=>f());unsubs=[];munsubs.forEach(f=>f());munsubs=[]}
+function goHome(msg){clearSubs();SS.del('nb');Object.assign(S,{role:null,code:null,uid:null,meta:undefined,players:{},seen:{},assign:null,mid:null,match:null,waiting:false,sel:null,closeArm:false,homeErr:msg||''});render()}
+function enter(){
+  clearSubs();let metaSeen=false;
+  unsubs.push(DB.on(R()+'/meta',v=>{if(!v){if(metaSeen||S.meta===undefined){return goHome(metaSeen?'部屋が閉じられました':'部屋が見つかりません')}}metaSeen=true;S.meta=v;render()}));
+  unsubs.push(DB.on(R()+'/players',v=>{S.players=v||{};render()}));
+  if(S.role==='teacher')unsubs.push(DB.on(R()+'/seen',v=>{S.seen=v||{};render()}));
+  else unsubs.push(DB.on(R()+'/mm/a/'+S.uid,onAssign));
+}
+function onAssign(a){
+  S.assign=a;
+  if(!a){munsubs.forEach(f=>f());munsubs=[];S.mid=null;S.match=null;return render()}
+  if(a.mid===S.mid)return;
+  munsubs.forEach(f=>f());munsubs=[];S.mid=a.mid;S.match=null;S.waiting=false;S.sel=null;S.oppSeen=DB.now();
+  DB.update(R()+'/players/'+S.uid,{st:'play'});
+  munsubs.push(DB.on(mpath(),m=>{S.match=m?norm(m):null;if(S.match){if(S.match.turnStart!==lastTurnStart){lastTurnStart=S.match.turnStart;S.sel=null}if(S.match.phase==='done'||S.match.phase==='void')settle()}render()}));
+  munsubs.push(DB.on(R()+'/seen/'+a.opp,v=>{if(v)S.oppSeen=v}));
+  render();
+}
+async function createRoom(){
+  const g=Math.max(1,Math.min(99,parseInt(($('#gems')||{}).value,10)||RULE.startGems));let code;
+  for(let i=0;i<5;i++){code=String(Math.floor(100000+Math.random()*900000));if(!(await DB.get('rooms/'+code+'/meta')))break}
+  S.role='teacher';S.code=code;S.uid='t'+rid(8);
+  await DB.set(R()+'/meta',{t:DB.now(),g,host:S.uid});SS.set('nb',{role:S.role,code:S.code,uid:S.uid,name:''});enter();
+}
+async function joinRoom(){
+  const code=($('#code').value||'').replace(/\D/g,''),name=($('#name').value||'').trim().slice(0,8);
+  if(code.length!==6)return homeErr('合言葉は6けたの数字です');if(!name)return homeErr('ニックネームを入れてね');
+  const meta=await DB.get('rooms/'+code+'/meta');if(!meta)return homeErr('その合言葉の部屋が見つかりません');
+  S.role='student';S.code=code;S.uid='u'+rid(10);S.name=name;
+  await DB.set(R()+'/players/'+S.uid,{n:name,g:meta.g,w:0,l:0,st:'idle'});await DB.set(R()+'/seen/'+S.uid,DB.now());
+  SS.set('nb',{role:S.role,code:S.code,uid:S.uid,name});enter();
+}
+function homeErr(t){const e=$('#herr');if(e)e.textContent=t}
+
+/* ========== 画面 ========== */
+function render(){
+  let h,wide=false;
+  if(!S.role)h=vHome();
+  else if(S.role==='teacher'){h=vTeacher();wide=true}
+  else if(!me())h=`<div class="home"><div class="sub center">読みこみ中…</div></div>`;
+  else if(S.assign){const m=S.match;h=!m?vWaitMatch():m.phase==='bet'?vBet(m):(m.phase==='done'||m.phase==='void')?vResult(m):vPlay(m)}
+  else h=vLobby();
+  app.className=wide?'wide':'';
+  if(!S.role&&$('#code')&&!S.homeErr)return;
+  app.innerHTML=h;lastKey=uiKey();S.homeErr='';tickDom();
+}
+function vHome(){const pre=new URLSearchParams(location.search).get('room')||'';return `<div class="home">
+  <h1><small class="mono">TIMELINE BATTLE</small>年号ならべ<br>バトル<span style="font-size:.45em;color:var(--sub)">（仮）</span></h1>
+  <div class="col" style="margin-top:8px"><input id="code" inputmode="numeric" maxlength="6" placeholder="合言葉（6けた）" value="${esc(pre)}"><input id="name" maxlength="8" placeholder="ニックネーム"><button class="btn" data-act="join">部屋に入る</button></div>
+  <div class="err" id="herr">${esc(S.homeErr)}</div>
+  <div class="card col"><div class="label mono">TEACHER — 先生はこちら</div><div class="row"><span class="sub" style="white-space:nowrap">最初のジェム</span><input id="gems" inputmode="numeric" value="${RULE.startGems}" style="padding:9px 12px;font-size:15px"><button class="btn ghost sm" data-act="create" style="white-space:nowrap">部屋を作る</button></div></div>
+  ${DB.demo?'<div class="demo">デモモード：この端末のタブ同士だけでつながります</div>':''}</div>`}
+function ranked(){return Object.keys(S.players).map(u=>Object.assign({u},S.players[u])).sort((a,b)=>(b.g||0)-(a.g||0)||(b.w||0)-(a.w||0))}
+function vLobby(){const p=me(),r=ranked(),my=r.findIndex(x=>x.u===S.uid);let top=r.slice(0,5);if(my>=5)top=r.slice(0,4).concat([r[my]]);
+  return `<div class="top"><span>部屋 <b class="mono">${esc(S.code)}</b></span><span>${esc(p.n)}</span></div>
+  <div class="card center col" style="gap:4px"><div class="label mono">YOUR GEMS</div><div class="big gem">💎 ${p.g||0}</div><div class="sub">${my+1}位 ／ ${r.length}人　${p.w||0}勝 ${p.l||0}敗</div></div>
+  <div class="rank">${top.map(x=>`<div class="${x.u===S.uid?'me':''}"><span>${r.indexOf(x)+1}位　${esc(x.n)}</span><span class="gem">💎 ${x.g||0}</span></div>`).join('')}</div>
+  <div class="grow"></div>
+  ${(p.g||0)<1?`<div class="sub center">ジェムがありません。先生に配ってもらおう</div><button class="btn" disabled>対戦する</button>`:
+    S.waiting?`<div class="sub center pulse">相手を探しています…</div><button class="btn ghost" data-act="stopwait">やめる</button>`:`<button class="btn" data-act="wait">対戦する</button>`}`}
+function vWaitMatch(){return `<div class="home"><div class="center sub pulse">相手が見つかりました。準備中…</div></div>`}
+function vBet(m){const u=S.uid,o=other(m,u),g=(me()||{}).g||1;
+  return `<div class="top"><span>部屋 <b class="mono">${esc(S.code)}</b></span><span class="mono timer" id="bt"></span></div>
+  <div class="center" style="margin-top:8px"><div class="label mono">MATCH — 対戦相手が決まりました</div><div class="sub" style="margin-top:4px">出し合うジェムの数を決めよう。勝った方が全部もらえます</div></div>
+  <div class="grow col" style="justify-content:center"><div class="card vs">
+    <div><div class="n">${esc(m.names[u])}（自分）</div><div class="b">💎${m.bet[u]}</div><span class="okb ${m.ok[u]?'on':''}">${m.ok[u]?'OK':'考え中'}</span></div><div class="sub">VS</div>
+    <div><div class="n">${esc(m.names[o])}</div><div class="b">💎${m.bet[o]}</div><span class="okb ${m.ok[o]?'on':''}">${m.ok[o]?'OK':'考え中'}</span></div></div>
+    <div class="sub center">持っているジェム：${g}個</div></div>
+  <div class="pm"><button class="btn ghost" data-act="bet" data-d="-1" ${m.bet[u]<=1?'disabled':''}>− へらす</button><button class="btn ghost" data-act="bet" data-d="1" ${m.bet[u]>=g?'disabled':''}>＋ ふやす</button></div>
+  <button class="btn" data-act="okbet" ${m.ok[u]?'disabled':''}>${m.ok[u]?'相手を待っています…':'これでOK'}</button>`}
+function dots(n){return '<span class="dots">'+Array.from({length:RULE.winsNeeded},(_,i)=>`<b class="${i<n?'on':''}"></b>`).join('')+'</span>'}
+function vPlay(m){const u=S.uid,o=other(m,u),mine=m.turn===u&&m.phase==='play',hand=m.hands[u],now=DB.now();
+  let panel;
+  if(m.phase==='roundEnd'){const w=m.rw;panel=`<div class="panel ${w==='draw'?'':w===u?'ok':'ng'}"><div class="who">${m.round}本目</div><div class="ttl">${w==='draw'?'引き分け':w===u?'あなたの勝ち！':esc(m.names[o])+'の勝ち'}</div><div class="txt" id="rg"></div></div>`}
+  else if(m.pick){const c=CARDS[m.pick];panel=`<div class="panel pick"><div class="who">${mine?'あなた':esc(m.names[o])}が出すカード</div><div class="ttl">${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>`}
+  else if(m.last&&now-m.last.at<3500){const l=m.last,who=l.u===u?'あなた':esc(m.names[o]);
+    panel=l.to?`<div class="panel ng"><div class="who">${who}</div><div class="ttl">時間切れ</div><div class="txt">山札から1枚引きました</div></div>`:
+      `<div class="panel ${l.ok?'ok':'ng'}"><div class="who">${who}</div><div class="ttl">${l.ok?'正解！':'ざんねん…'}　${CARDS[l.c].year}年</div><div class="txt">${esc(CARDS[l.c].title)}${l.ok?'':'　→ 山札から1枚引きました'}</div></div>`}
+  else panel=`<div class="panel"><div class="txt center">${mine?'手札からカードを1枚えらぼう':esc(m.names[o])+'がカードを選んでいます…'}</div></div>`;
+  const placing=mine&&m.pick,L=m.line;let tl='';
+  const slot=g=>placing?(S.sel===g?`<div class="tr pre"><span class="y mono">????</span><span class="t">${esc(CARDS[m.pick].title)}</span></div>`:`<div class="slot" data-act="gap" data-g="${g}">ここ</div>`):'';
+  L.forEach((id,i)=>{const c=CARDS[id],cls=m.last&&m.last.c===id?(m.last.ok?'ok':'ng'):'';tl+=slot(i)+`<div class="tr ${cls}" ${placing?`data-act="rowgap" data-i="${i}"`:''}><span class="y mono">${c.year}</span><span class="t">${esc(c.title)}</span></div>`});tl+=slot(L.length);
+  const cols=Math.max(4,hand.length);
+  const btn=m.phase!=='play'?'':mine?`<button class="btn" id="cf" data-act="confirm" disabled></button>`:`<button class="btn ghost" disabled>相手の番です</button>`;
+  return `<div class="top"><span>${esc(m.names[o])}　手札 ${m.hands[o].length}枚 ${dots(m.wins[o])}</span><span>山札 ${m.deck.length}</span></div>
+  <div class="turn"><span class="${mine?'mine':''}">${m.phase==='roundEnd'?'　':mine?'● あなたの番':'○ '+esc(m.names[o])+'の番'}${m.firstOut&&m.phase==='play'?'（最後の1手）':''}</span><span class="mono timer" id="tt"></span></div>
+  ${panel}<div class="tl">${tl}</div>${btn}
+  <div class="top"><span>自分の手札 ${dots(m.wins[u])}　${m.first===u?'先攻':'後攻'}</span><span class="gem">💎 ${m.bet[u]} vs ${m.bet[o]}</span></div>
+  <div class="hand" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${hand.map(id=>`<button class="hc ${m.pick===id&&mine?'on':''} ${mine?'':'off'}" ${mine?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`}
+function vResult(m){const u=S.uid,o=other(m,u),p=me()||{},v=m.phase==='void',win=m.winner===u,miss=Object.keys(m.miss[u]).map(id=>CARDS[id]).sort((a,b)=>a.year-b.year),done=p.ls===S.mid;
+  const show=miss.slice(0,12),more=miss.length-show.length;
+  return `<div class="top"><span>部屋 <b class="mono">${esc(S.code)}</b></span><span>vs ${esc(m.names[o])}</span></div>
+  <div class="card col center" style="gap:6px"><div class="res ${v?'':win?'win':'lose'}">${v?'無効試合':win?'勝ち！':'負け…'}</div>
+  <div class="sub">${v?'相手の接続が切れました。ジェムはそのままです':`${m.wins[u]} − ${m.wins[o]}`}</div>
+  ${v?'':`<div class="gem" style="font-size:22px">💎 ${win?'+'+m.bet[o]:'−'+m.bet[u]}　<span class="sub">→ ${done?(p.g||0):'…'}個</span></div>`}</div>
+  <div class="label mono">REVIEW — まちがえたカード</div>
+  <div class="grow">${miss.length?`<div class="miss">${show.map(c=>`<div><b class="mono">${c.year}</b>${esc(c.title)}</div>`).join('')}</div>${more>0?`<div class="sub" style="margin-top:6px">ほか ${more}枚</div>`:''}`:'<div class="sub">'+(v?'':'まちがいなし！すごい')+'</div>'}</div>
+  <button class="btn" data-act="leave">部屋に戻る</button>`}
+function vTeacher(){const r=ranked(),now=DB.now(),stt={play:'対戦中',wait:'対戦待ち',idle:'待機'};
+  return `<div class="thead"><div><div class="label mono">ROOM CODE — 合言葉</div><div class="code mono">${esc(S.code)}</div><div class="sub">${esc(location.origin+location.pathname)}　を開いて合言葉を入れる</div></div>
+  <div class="col" style="align-items:flex-end"><div class="sub">参加 ${r.length}人　最初のジェム ${S.meta?S.meta.g:''}個${DB.demo?'　（デモモード）':''}</div><button class="btn ghost sm" data-act="close">${S.closeArm?'もう一度押すと閉じます':'部屋を閉じる'}</button></div></div>
+  <div class="plist">${r.length?r.map((p,i)=>{const off=now-(S.seen[p.u]||0)>30000;return `<div class="pl ${off?'off':''}"><span class="mono sub">${i+1}</span><span class="nm">${esc(p.n)}</span><span class="gem">💎 ${p.g||0}</span><span class="sub mono">${p.w||0}-${p.l||0}</span><span class="st ${p.st||''}">${off?'オフライン':stt[p.st]||'待機'}</span><button class="btn ghost sm" data-act="give" data-u="${p.u}" style="padding:5px 0">+5</button></div>`}).join(''):'<div class="sub">生徒が入るのを待っています…</div>'}</div>`}
+
+/* ========== 時間で動くもの ========== */
+function uiKey(){const m=S.match;if(!m||S.role!=='student')return '';const now=DB.now();return [m.phase,m.last&&now-m.last.at<3500?1:0].join('|')}
+function tickDom(){const m=S.match,now=DB.now();if(!m)return;
+  const bt=$('#bt');if(bt)bt.textContent=Math.max(0,Math.ceil(RULE.betSec-(now-m.betStart)/1000))+'秒';
+  const tt=$('#tt');if(tt&&m.phase==='play'){const s=Math.max(0,Math.ceil(RULE.turnSec-(now-m.turnStart)/1000));tt.textContent=s+'秒';tt.classList.toggle('hot',s<=10)}
+  const rg=$('#rg');if(rg){const w=m.ids.some(u=>m.wins[u]>=RULE.winsNeeded);rg.textContent=w?'結果を表示します…':'次の1本がはじまります…'}
+  const cf=$('#cf');if(cf){const lock=m.pick?Math.ceil(RULE.lockSec-(now-m.pickAt)/1000):0;
+    if(!m.pick){cf.disabled=true;cf.textContent='手札からカードを選ぼう'}else if(S.sel==null){cf.disabled=true;cf.textContent='年表の置く場所をタップ'}else if(lock>0){cf.disabled=true;cf.textContent='あと '+lock+' 秒'}else{cf.disabled=false;cf.textContent='ここで確定'}}
+}
+function tick(){
+  if(!S.role||!DB)return;const now=DB.now();
+  if(S.role==='student'&&me()&&now-lastBeat>10000){lastBeat=now;DB.set(R()+'/seen/'+S.uid,now)}
+  if(S.role==='teacher'){if(now-lastBeat>10000){lastBeat=now;render()}return}
+  if(S.waiting&&!S.assign&&now-lastQ>3000){lastQ=now;queueTick()}
+  if(S.assign&&!S.match)ensureMatch();
+  const m=S.match;
+  if(m){const u=S.uid,o=other(m,u);
+    if(m.phase==='bet'){if(m.ids.every(x=>m.ok[x]))startMatch(false);else if(now-m.betStart>RULE.betSec*1000)startMatch(true)}
+    if(m.phase==='play'){const el=now-m.turnStart;if(m.turn===u&&el>RULE.turnSec*1000)timeoutTurn(u,m.turnStart);else if(m.turn===o&&el>(RULE.turnSec+6)*1000)timeoutTurn(o,m.turnStart)}
+    if(m.phase==='roundEnd'&&now-m.rEnd>RULE.roundGapSec*1000)nextRound();
+    if(m.phase!=='done'&&m.phase!=='void'&&now-S.oppSeen>RULE.voidSec*1000)voidMatch();
+    if(uiKey()!==lastKey)render();else tickDom();
+  }
+}
+
+/* ========== 操作 ========== */
+app.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled)return;const a=t.dataset.act,m=S.match;
+  if(a==='join')joinRoom().catch(()=>homeErr('通信できませんでした'));
+  else if(a==='create')createRoom().catch(()=>homeErr('通信できませんでした'));
+  else if(a==='wait')startWait();else if(a==='stopwait')stopWait();
+  else if(a==='bet')setBet(m.bet[S.uid]+Number(t.dataset.d));else if(a==='okbet')okBet();
+  else if(a==='pick')pickCard(t.dataset.c);
+  else if(a==='gap'){S.sel=Number(t.dataset.g);render()}
+  else if(a==='rowgap'){const r=t.getBoundingClientRect(),i=Number(t.dataset.i);S.sel=(e.clientY-r.top<r.height/2)?i:i+1;render()}
+  else if(a==='confirm'){if(S.sel!=null&&m.pick)place(S.sel)}
+  else if(a==='leave')leaveMatch();
+  else if(a==='give')DB.tx(R()+'/players/'+t.dataset.u,p=>{if(!p)return p;p.g=(p.g||0)+5;return p});
+  else if(a==='close'){if(S.closeArm){DB.set(R(),null)}else{S.closeArm=true;render();setTimeout(()=>{S.closeArm=false;if(S.role==='teacher')render()},3000)}}
+});
+
+/* ========== はじまり ========== */
+(async function boot(){
+  loadCards();
+  try{DB=window.FIREBASE_CONFIG?await makeFirebase(window.FIREBASE_CONFIG):makeLocal()}
+  catch(e){console.error(e);app.innerHTML='<div class="home"><div class="err">通信の準備に失敗しました。ページを開き直してください</div></div>';return}
+  const s=SS.get('nb');if(s&&s.code){Object.assign(S,{role:s.role,code:s.code,uid:s.uid,name:s.name||''});enter()}
+  render();setInterval(tick,500);
+})();
+</script>
+</body>
+</html>
