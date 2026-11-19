@@ -51,40 +51,52 @@ input::placeholder{color:#565b66}
 .okb.on{border-color:var(--ok);color:var(--ok)}
 .pm{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 /* play */
-.top{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--sub);flex:none}
-.dots b{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--sub);margin-left:3px}
+.race{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.race div{border:1px solid var(--line);border-radius:10px;padding:5px 10px;font-size:12px;color:var(--sub);display:flex;align-items:center;justify-content:space-between;gap:6px;overflow:hidden;white-space:nowrap}
+.race div.act{border-color:var(--acc);color:var(--ink)}
+.race b{font-size:16px;color:var(--ink);font-weight:900}
+.goal{flex:none;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--sub)}
+.dots b{display:inline-block;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--sub);margin-left:3px}
 .dots b.on{background:var(--acc);border-color:var(--acc)}
-.turn{flex:none;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700}
-.turn .mine{color:var(--acc)}
-.timer{font-size:15px}
-.timer.hot{color:var(--ng)}
-.panel{flex:none;height:112px;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;gap:4px;overflow:hidden}
-.panel.pick{border-color:var(--acc);background:var(--accd)}
+.timer{font-size:14px;color:var(--ink)}
+.panel{flex:none;height:128px;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:4px;overflow:hidden}
+.panel.ask{border-color:var(--acc);background:var(--accd)}
 .panel.ok{border-color:var(--ok)}
 .panel.ng{border-color:var(--ng)}
-.panel .who{font-size:11px;color:var(--sub)}
-.panel .ttl{font-size:17px;font-weight:900;line-height:1.3}
-.panel .txt{font-size:12.5px;line-height:1.5;color:#cfd2d8}
-.tl{flex:1;min-height:0;display:flex;flex-direction:column;gap:2px}
-.tr{flex:1 1 0;min-height:0;max-height:38px;display:flex;align-items:center;gap:10px;padding:0 10px;border:1px solid var(--line);border-radius:7px;font-size:clamp(11px,3.3vw,13.5px);overflow:hidden;background:var(--panel)}
-.tr .y{width:40px;flex:none;color:var(--sub);font-size:.95em}
+.panel .who{font-size:12px;color:var(--sub)}
+.panel .ttl{font-size:18px;font-weight:900;line-height:1.35}
+.panel .ttl .yr{color:var(--acc);margin-right:6px}
+.panel .txt{font-size:14px;line-height:1.5;color:#d5d8de}
+.tl{flex:1;min-height:0;display:flex;flex-direction:column;gap:3px;transition:opacity .2s}
+.tl.dim,.hand.dim{opacity:.4}
+.tr{flex:1 1 0;min-height:0;max-height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid var(--line);border-radius:8px;font-size:clamp(12px,3.9vw,15px);overflow:hidden;background:var(--panel);color:var(--ink);font-family:inherit;text-align:left;width:100%}
+.tr .y{width:44px;flex:none;color:var(--sub)}
 .tr .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tr.ok{border-color:var(--ok)}
 .tr.ng{border-color:var(--ng)}
-.tr.pre{border:2px solid var(--acc);background:var(--accd);color:var(--acc);font-weight:700}
-.slot{flex:.45 1 0;min-height:0;max-height:20px;border:1px dashed #3a3e49;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#5d626e;overflow:hidden;line-height:1}
-.hand{flex:none;display:grid;gap:6px;height:76px}
-.hc{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:4px;font-size:clamp(10.5px,3vw,12px);font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;overflow:hidden}
-.hc.on{border:2px solid var(--acc);color:var(--acc)}
-.hc.off{opacity:.55}
-.hc.back{background:repeating-linear-gradient(45deg,var(--panel2) 0 6px,var(--panel) 6px 12px)}
+.tr.pre{flex:1.5 1 0;max-height:48px;border:2px solid var(--acc);background:var(--acc);color:#0d0e11;font-weight:900;justify-content:center}
+.slot{flex:1 1 0;min-height:0;max-height:40px;border:1.5px dashed var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:clamp(10px,3.4vw,13px);font-weight:700;color:var(--acc);background:transparent;overflow:hidden;line-height:1;font-family:inherit;width:100%}
+.foot{flex:none;display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+.hand{flex:none;display:grid;gap:6px;height:84px;transition:opacity .2s}
+.hc{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:4px;font-size:clamp(11px,3.4vw,13.5px);font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;overflow:hidden;color:var(--ink)}
+.hc.can{border:2px solid var(--acc)}
+.hc.on{border:2px solid var(--acc);background:var(--accd);color:var(--acc)}
 /* result */
-.res{font-size:42px;font-weight:900;text-align:center}
+.rescard{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.res{font-size:30px;font-weight:900}
 .res.win{color:var(--acc)}
 .res.lose{color:var(--ng)}
-.miss{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:12px}
-.miss div{border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--panel);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.miss{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:13px}
+.miss div{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .miss b{color:var(--acc);margin-right:6px}
+.yin{flex:none;height:56px;border:1px solid var(--line);border-radius:14px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;letter-spacing:.08em}
+.yin i{font-style:normal;font-size:16px;color:var(--sub);margin-left:6px;letter-spacing:0}
+.yin .ph{font-size:16px;color:#565b66;letter-spacing:0;font-family:"Noto Sans JP",sans-serif}
+.keys{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.keys button{height:48px;border:1px solid var(--line);background:var(--panel2);border-radius:12px;font-size:20px;font-weight:700;font-family:"JetBrains Mono",monospace}
+.keys button.go{background:var(--acc);color:#0d0e11;border-color:var(--acc);font-family:inherit;font-size:16px;font-weight:900}
+.keys button:disabled{opacity:.3}
+.link{background:none;border:none;color:var(--sub);font-size:12px;text-decoration:underline;align-self:center;padding:4px}
 /* teacher */
 .thead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex:none;flex-wrap:wrap}
 .code{font-size:clamp(48px,9vw,96px);font-weight:700;letter-spacing:.12em;color:var(--acc);line-height:1}
@@ -104,7 +116,7 @@ input::placeholder{color:#565b66}
 <script>
 "use strict";
 /* ========== 設定（ルールの数字はここで変えられます） ========== */
-const RULE={hand:4,lineMax:15,winsNeeded:2,turnSec:30,betSec:30,lockSec:3,roundGapSec:4,voidSec:60,startGems:10};
+const RULE={hand:4,lineMax:15,winsNeeded:2,turnSec:30,betSec:30,roundGapSec:4,voidSec:60,startGems:10};
 
 /* ========== 小道具 ========== */
 const $=s=>document.querySelector(s), app=$('#app');
@@ -155,7 +167,8 @@ async function makeFirebase(cfg){
 let DB;
 
 /* ========== 状態 ========== */
-const S={role:null,code:null,uid:null,name:'',meta:undefined,players:{},seen:{},assign:null,mid:null,match:null,oppSeen:0,waiting:false,sel:null,closeArm:false,homeErr:''};
+const S={role:null,code:null,uid:null,name:'',meta:undefined,players:{},seen:{},assign:null,mid:null,match:null,rev:null,oppSeen:0,waiting:false,sel:null,closeArm:false,homeErr:''};
+const FB=4500,LOCK=2500;
 let unsubs=[],munsubs=[],busy={},lastBeat=0,lastQ=0,lastKey='',lastTurnStart=0;
 const R=()=>'rooms/'+S.code;
 const me=()=>S.players[S.uid];
@@ -227,9 +240,9 @@ function enter(){
 }
 function onAssign(a){
   S.assign=a;
-  if(!a){munsubs.forEach(f=>f());munsubs=[];S.mid=null;S.match=null;return render()}
+  if(!a){munsubs.forEach(f=>f());munsubs=[];S.mid=null;S.match=null;S.rev=null;return render()}
   if(a.mid===S.mid)return;
-  munsubs.forEach(f=>f());munsubs=[];S.mid=a.mid;S.match=null;S.waiting=false;S.sel=null;S.oppSeen=DB.now();
+  munsubs.forEach(f=>f());munsubs=[];S.mid=a.mid;S.match=null;S.rev=null;S.waiting=false;S.sel=null;S.oppSeen=DB.now();
   DB.update(R()+'/players/'+S.uid,{st:'play'});
   munsubs.push(DB.on(mpath(),m=>{S.match=m?norm(m):null;if(S.match){if(S.match.turnStart!==lastTurnStart){lastTurnStart=S.match.turnStart;S.sel=null}if(S.match.phase==='done'||S.match.phase==='void')settle()}render()}));
   munsubs.push(DB.on(R()+'/seen/'+a.opp,v=>{if(v)S.oppSeen=v}));
@@ -288,32 +301,39 @@ function vBet(m){const u=S.uid,o=other(m,u),g=(me()||{}).g||1;
   <div class="pm"><button class="btn ghost" data-act="bet" data-d="-1" ${m.bet[u]<=1?'disabled':''}>− へらす</button><button class="btn ghost" data-act="bet" data-d="1" ${m.bet[u]>=g?'disabled':''}>＋ ふやす</button></div>
   <button class="btn" data-act="okbet" ${m.ok[u]?'disabled':''}>${m.ok[u]?'相手を待っています…':'これでOK'}</button>`}
 function dots(n){return '<span class="dots">'+Array.from({length:RULE.winsNeeded},(_,i)=>`<b class="${i<n?'on':''}"></b>`).join('')+'</span>'}
-function vPlay(m){const u=S.uid,o=other(m,u),mine=m.turn===u&&m.phase==='play',hand=m.hands[u],now=DB.now();
+function vPlay(m){const u=S.uid,o=other(m,u),on=m.phase==='play',mine=m.turn===u&&on,hand=m.hands[u],now=DB.now(),oppN=esc(m.names[o]);
+  const since=m.last?now-m.last.at:1e9,lock=on&&since<LOCK,fb=on&&since<FB&&!m.pick;
   let panel;
-  if(m.phase==='roundEnd'){const w=m.rw;panel=`<div class="panel ${w==='draw'?'':w===u?'ok':'ng'}"><div class="who">${m.round}本目</div><div class="ttl">${w==='draw'?'引き分け':w===u?'あなたの勝ち！':esc(m.names[o])+'の勝ち'}</div><div class="txt" id="rg"></div></div>`}
-  else if(m.pick){const c=CARDS[m.pick];panel=`<div class="panel pick"><div class="who">${mine?'あなた':esc(m.names[o])}が出すカード</div><div class="ttl">${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>`}
-  else if(m.last&&now-m.last.at<3500){const l=m.last,who=l.u===u?'あなた':esc(m.names[o]);
-    panel=l.to?`<div class="panel ng"><div class="who">${who}</div><div class="ttl">時間切れ</div><div class="txt">山札から1枚引きました</div></div>`:
-      `<div class="panel ${l.ok?'ok':'ng'}"><div class="who">${who}</div><div class="ttl">${l.ok?'正解！':'ざんねん…'}　${CARDS[l.c].year}年</div><div class="txt">${esc(CARDS[l.c].title)}${l.ok?'':'　→ 山札から1枚引きました'}</div></div>`}
-  else panel=`<div class="panel"><div class="txt center">${mine?'手札からカードを1枚えらぼう':esc(m.names[o])+'がカードを選んでいます…'}</div></div>`;
-  const placing=mine&&m.pick,L=m.line;let tl='';
-  const slot=g=>placing?(S.sel===g?`<div class="tr pre"><span class="y mono">????</span><span class="t">${esc(CARDS[m.pick].title)}</span></div>`:`<div class="slot" data-act="gap" data-g="${g}">ここ</div>`):'';
+  if(m.phase==='roundEnd'){const w=m.rw;panel=`<div class="panel ${w==='draw'?'':w===u?'ok':'ng'}"><div class="who">${m.round}本目</div><div class="ttl">${w==='draw'?'引き分け':w===u?'あなたが先に出し切った':oppN+'が先に出し切った'}</div><div class="txt" id="rg"></div></div>`}
+  else if(fb){const l=m.last,who=l.u===u?'あなた':oppN;
+    if(l.to)panel=`<div class="panel ng"><div class="who">${who}</div><div class="ttl">時間切れ</div><div class="txt">山札から1枚もらいます</div></div>`;
+    else{const c=CARDS[l.c];panel=`<div class="panel ${l.ok?'ok':'ng'}"><div class="who">${who}の答え：${l.ok?'正解':'ちがいました。正しい場所に移して、1枚もらいます'}</div><div class="ttl"><span class="yr mono">${c.year}年</span>${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>`}}
+  else if(m.pick){const c=CARDS[m.pick];panel=mine?`<div class="panel ask"><div class="ttl">「${esc(c.title)}」は<br>どこに入る？</div><div class="txt">${esc(c.text)}</div></div>`:`<div class="panel"><div class="who">${oppN}が出すカード。どこに入るか考えてみよう</div><div class="ttl">${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>`}
+  else panel=`<div class="panel ${mine?'ask':''}"><div class="ttl center">${mine?'あなたの番<br>出すカードを1枚えらぼう':oppN+'が考え中…'}</div></div>`;
+  const canPick=mine&&!lock,placing=canPick&&!!m.pick,L=m.line;let tl='';
+  const slot=g=>!placing?'':S.sel===g?`<button class="tr pre" data-act="confirmgap">ここに置く（もう一度タップで決定）</button>`:`<button class="slot" data-act="gap" data-g="${g}">＋ ここ？</button>`;
   L.forEach((id,i)=>{const c=CARDS[id],cls=m.last&&m.last.c===id?(m.last.ok?'ok':'ng'):'';tl+=slot(i)+`<div class="tr ${cls}" ${placing?`data-act="rowgap" data-i="${i}"`:''}><span class="y mono">${c.year}</span><span class="t">${esc(c.title)}</span></div>`});tl+=slot(L.length);
-  const cols=Math.max(4,hand.length);
-  const btn=m.phase!=='play'?'':mine?`<button class="btn" id="cf" data-act="confirm" disabled></button>`:`<button class="btn ghost" disabled>相手の番です</button>`;
-  return `<div class="top"><span>${esc(m.names[o])}　手札 ${m.hands[o].length}枚 ${dots(m.wins[o])}</span><span>山札 ${m.deck.length}</span></div>
-  <div class="turn"><span class="${mine?'mine':''}">${m.phase==='roundEnd'?'　':mine?'● あなたの番':'○ '+esc(m.names[o])+'の番'}${m.firstOut&&m.phase==='play'?'（最後の1手）':''}</span><span class="mono timer" id="tt"></span></div>
-  ${panel}<div class="tl">${tl}</div>${btn}
-  <div class="top"><span>自分の手札 ${dots(m.wins[u])}　${m.first===u?'先攻':'後攻'}</span><span class="gem">💎 ${m.bet[u]} vs ${m.bet[o]}</span></div>
-  <div class="hand" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${hand.map(id=>`<button class="hc ${m.pick===id&&mine?'on':''} ${mine?'':'off'}" ${mine?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`}
-function vResult(m){const u=S.uid,o=other(m,u),p=me()||{},v=m.phase==='void',win=m.winner===u,miss=Object.keys(m.miss[u]).map(id=>CARDS[id]).sort((a,b)=>a.year-b.year),done=p.ls===S.mid;
+  const cols=Math.max(3,hand.length);
+  return `<div class="race"><div class="${mine?'act':''}"><span>あなた ${dots(m.wins[u])}</span><b>あと${hand.length}枚</b></div><div class="${on&&!mine?'act':''}"><span>${oppN} ${dots(m.wins[o])}</span><b>あと${m.hands[o].length}枚</b></div></div>
+  <div class="goal"><span>先に0枚にした方の勝ち${m.firstOut&&on?'（最後の1手）':''}</span><span class="mono timer" id="tt"></span></div>
+  ${panel}<div class="tl ${canPick&&!m.pick?'dim':''}">${tl}</div>
+  <div class="foot"><span>自分の手札${mine&&m.pick?'（タップで選び直せます）':''}</span><span class="gem">💎 ${m.bet[u]} vs ${m.bet[o]}</span></div>
+  <div class="hand ${canPick?'':'dim'}" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${hand.map(id=>`<button class="hc ${m.pick===id&&mine?'on':canPick&&!m.pick?'can':''}" ${canPick?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`}
+function missList(m){return Object.keys(m.miss[S.uid]).map(id=>CARDS[id]).sort((a,b)=>a.year-b.year||(a.id<b.id?-1:1))}
+function vResult(m){const u=S.uid,o=other(m,u),p=me()||{},v=m.phase==='void',win=m.winner===u,miss=missList(m),done=p.ls===S.mid;
+  if(!S.rev)S.rev={i:0,inp:'',shown:false,ok:false,right:0,skip:false};const r=S.rev,reviewing=!v&&!r.skip&&r.i<miss.length;
+  const head=`<div class="card rescard"><div><div class="res ${v?'':win?'win':'lose'}">${v?'無効試合':win?'勝ち':'負け'}</div><div class="sub">${v?'相手の接続が切れました':`vs ${esc(m.names[o])}　${m.wins[u]} − ${m.wins[o]}`}</div></div>
+  ${v?'<div class="sub">ジェムはそのまま</div>':`<div class="gem" style="font-size:20px;text-align:right">💎 ${win?'+'+m.bet[o]:'−'+m.bet[u]}<div class="sub">${done?'いま '+(p.g||0)+'個':''}</div></div>`}</div>`;
+  if(reviewing){const c=miss[r.i];
+    return `${head}<div class="label mono">REVIEW — まちがえたカードをもう一度（${r.i+1}/${miss.length}）</div>
+    <div class="panel ${r.shown?(r.ok?'ok':'ng'):'ask'}"><div class="who">${r.shown?(r.ok?'正解':'正しくは '+c.year+'年（あなたの答え：'+esc(r.inp)+'年）'):'これは何年のできごと？'}</div><div class="ttl">${r.shown?`<span class="yr mono">${c.year}年</span>`:''}${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>
+    ${r.shown?`<div class="grow"></div><button class="btn" data-act="revnext">${r.i+1<miss.length?'次のカードへ':'おわり'}</button>`:
+    `<div class="yin mono">${r.inp?esc(r.inp)+'<i>年</i>':'<span class="ph">年号を数字で入れよう</span>'}</div><div class="grow"></div>
+    <div class="keys">${[1,2,3,4,5,6,7,8,9].map(k=>`<button data-act="key" data-k="${k}">${k}</button>`).join('')}<button data-act="key" data-k="del">⌫</button><button data-act="key" data-k="0">0</button><button class="go" data-act="key" data-k="go" ${r.inp.length>=3?'':'disabled'}>答える</button></div>
+    <button class="link" data-act="revskip">復習をとばす</button>`}`}
   const show=miss.slice(0,12),more=miss.length-show.length;
-  return `<div class="top"><span>部屋 <b class="mono">${esc(S.code)}</b></span><span>vs ${esc(m.names[o])}</span></div>
-  <div class="card col center" style="gap:6px"><div class="res ${v?'':win?'win':'lose'}">${v?'無効試合':win?'勝ち！':'負け…'}</div>
-  <div class="sub">${v?'相手の接続が切れました。ジェムはそのままです':`${m.wins[u]} − ${m.wins[o]}`}</div>
-  ${v?'':`<div class="gem" style="font-size:22px">💎 ${win?'+'+m.bet[o]:'−'+m.bet[u]}　<span class="sub">→ ${done?(p.g||0):'…'}個</span></div>`}</div>
-  <div class="label mono">REVIEW — まちがえたカード</div>
-  <div class="grow">${miss.length?`<div class="miss">${show.map(c=>`<div><b class="mono">${c.year}</b>${esc(c.title)}</div>`).join('')}</div>${more>0?`<div class="sub" style="margin-top:6px">ほか ${more}枚</div>`:''}`:'<div class="sub">'+(v?'':'まちがいなし！すごい')+'</div>'}</div>
+  return `${head}<div class="label mono">REVIEW — ${miss.length?(r.skip?'まちがえたカード':'復習おわり　'+r.right+' / '+miss.length+' 問正解'):'まちがえたカード'}</div>
+  <div class="grow">${miss.length?`<div class="miss">${show.map(c=>`<div><b class="mono">${c.year}</b>${esc(c.title)}</div>`).join('')}</div>${more>0?`<div class="sub" style="margin-top:6px">ほか ${more}枚</div>`:''}`:'<div class="sub">'+(v?'':'まちがいなし')+'</div>'}</div>
   <button class="btn" data-act="leave">部屋に戻る</button>`}
 function vTeacher(){const r=ranked(),now=DB.now(),stt={play:'対戦中',wait:'対戦待ち',idle:'待機'};
   return `<div class="thead"><div><div class="label mono">ROOM CODE — 合言葉</div><div class="code mono">${esc(S.code)}</div><div class="sub">${esc(location.origin+location.pathname)}　を開いて合言葉を入れる</div></div>
@@ -321,13 +341,11 @@ function vTeacher(){const r=ranked(),now=DB.now(),stt={play:'対戦中',wait:'�
   <div class="plist">${r.length?r.map((p,i)=>{const off=now-(S.seen[p.u]||0)>30000;return `<div class="pl ${off?'off':''}"><span class="mono sub">${i+1}</span><span class="nm">${esc(p.n)}</span><span class="gem">💎 ${p.g||0}</span><span class="sub mono">${p.w||0}-${p.l||0}</span><span class="st ${p.st||''}">${off?'オフライン':stt[p.st]||'待機'}</span><button class="btn ghost sm" data-act="give" data-u="${p.u}" style="padding:5px 0">+5</button></div>`}).join(''):'<div class="sub">生徒が入るのを待っています…</div>'}</div>`}
 
 /* ========== 時間で動くもの ========== */
-function uiKey(){const m=S.match;if(!m||S.role!=='student')return '';const now=DB.now();return [m.phase,m.last&&now-m.last.at<3500?1:0].join('|')}
+function uiKey(){const m=S.match;if(!m||S.role!=='student')return '';const d=m.last?DB.now()-m.last.at:1e9;return [m.phase,d<LOCK?1:0,d<FB?1:0].join('|')}
 function tickDom(){const m=S.match,now=DB.now();if(!m)return;
   const bt=$('#bt');if(bt)bt.textContent=Math.max(0,Math.ceil(RULE.betSec-(now-m.betStart)/1000))+'秒';
-  const tt=$('#tt');if(tt&&m.phase==='play'){const s=Math.max(0,Math.ceil(RULE.turnSec-(now-m.turnStart)/1000));tt.textContent=s+'秒';tt.classList.toggle('hot',s<=10)}
+  const tt=$('#tt');if(tt&&m.phase==='play'){const s=Math.max(0,Math.ceil(RULE.turnSec-(now-m.turnStart)/1000));tt.textContent='のこり '+s+'秒'}
   const rg=$('#rg');if(rg){const w=m.ids.some(u=>m.wins[u]>=RULE.winsNeeded);rg.textContent=w?'結果を表示します…':'次の1本がはじまります…'}
-  const cf=$('#cf');if(cf){const lock=m.pick?Math.ceil(RULE.lockSec-(now-m.pickAt)/1000):0;
-    if(!m.pick){cf.disabled=true;cf.textContent='手札からカードを選ぼう'}else if(S.sel==null){cf.disabled=true;cf.textContent='年表の置く場所をタップ'}else if(lock>0){cf.disabled=true;cf.textContent='あと '+lock+' 秒'}else{cf.disabled=false;cf.textContent='ここで確定'}}
 }
 function tick(){
   if(!S.role||!DB)return;const now=DB.now();
@@ -354,7 +372,10 @@ app.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t
   else if(a==='pick')pickCard(t.dataset.c);
   else if(a==='gap'){S.sel=Number(t.dataset.g);render()}
   else if(a==='rowgap'){const r=t.getBoundingClientRect(),i=Number(t.dataset.i);S.sel=(e.clientY-r.top<r.height/2)?i:i+1;render()}
-  else if(a==='confirm'){if(S.sel!=null&&m.pick)place(S.sel)}
+  else if(a==='confirmgap'){if(S.sel!=null&&m.pick)place(S.sel)}
+  else if(a==='key'){const r=S.rev,k=t.dataset.k;if(!r)return;if(k==='del')r.inp=r.inp.slice(0,-1);else if(k==='go'){const c=missList(m)[r.i];r.ok=Number(r.inp)===c.year;if(r.ok)r.right++;r.shown=true}else if(r.inp.length<4)r.inp+=k;render()}
+  else if(a==='revnext'){const r=S.rev;r.i++;r.inp='';r.shown=false;render()}
+  else if(a==='revskip'){S.rev.skip=true;render()}
   else if(a==='leave')leaveMatch();
   else if(a==='give')DB.tx(R()+'/players/'+t.dataset.u,p=>{if(!p)return p;p.g=(p.g||0)+5;return p});
   else if(a==='close'){if(S.closeArm){DB.set(R(),null)}else{S.closeArm=true;render();setTimeout(()=>{S.closeArm=false;if(S.role==='teacher')render()},3000)}}
