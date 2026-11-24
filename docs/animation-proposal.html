@@ -1,0 +1,395 @@
+<title>置く動きの提案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* アプリ本体と同じ白地に青。左に実際に触れる年表、右と下に案の説明 */
+:root{
+  --page:#ffffff;--bg:#f3f5fa;--panel:#ffffff;--line:#d6dbe8;--ink:#1b2233;--sub:#667089;
+  --acc:#3d5afe;--onacc:#ffffff;--accd:rgba(61,90,254,.08);
+  --ok:#0f9d63;--okd:rgba(15,157,99,.10);--ng:#e5484d;--ngd:rgba(229,72,77,.08);
+  --shadow:rgba(27,34,51,.18);
+  --font:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#10131b;--bg:#171c27;--panel:#1f2533;--line:#323a50;--ink:#e8ecf5;--sub:#939cb2;
+  --acc:#7b91ff;--onacc:#0f1320;--accd:rgba(123,145,255,.14);
+  --ok:#3fcb8f;--okd:rgba(63,203,143,.14);--ng:#ff7377;--ngd:rgba(255,115,119,.13);
+  --shadow:rgba(0,0,0,.5);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --page:#10131b;--bg:#171c27;--panel:#1f2533;--line:#323a50;--ink:#e8ecf5;--sub:#939cb2;
+  --acc:#7b91ff;--onacc:#0f1320;--accd:rgba(123,145,255,.14);
+  --ok:#3fcb8f;--okd:rgba(63,203,143,.14);--ng:#ff7377;--ngd:rgba(255,115,119,.13);
+  --shadow:rgba(0,0,0,.5);color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.75}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px;display:flex;flex-direction:column;gap:48px}
+h1{font-size:clamp(22px,4.6vw,30px);font-weight:900;line-height:1.35;margin:0;text-wrap:balance;word-break:auto-phrase}
+h2,h3,.badge{word-break:auto-phrase}
+h2{font-size:20px;font-weight:900;margin:0 0 4px;text-wrap:balance}
+h3{font-size:16px;font-weight:900;margin:0;line-height:1.4}
+p{margin:0}
+.lead{color:var(--sub);max-width:62ch}
+.kicker{font-size:12px;font-weight:700;color:var(--acc);letter-spacing:.08em}
+header{display:flex;flex-direction:column;gap:10px}
+.note{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 14px;font-size:13.5px;max-width:62ch}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible+span{outline:2px solid var(--acc);outline-offset:2px}
+
+/* 試せる年表 */
+.try{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:36px;align-items:start}
+@media (max-width:760px){.try{grid-template-columns:minmax(0,1fr)}.try .stage{margin:0 auto}}
+.ctrl{display:flex;flex-direction:column;gap:22px;min-width:0}
+.ctrl h3{margin-bottom:8px}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:var(--panel)}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt .box{flex:none;width:20px;height:20px;border-radius:6px;border:2px solid var(--line);margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:var(--onacc)}
+.opt input:checked+.box{background:var(--acc);border-color:var(--acc)}
+.opt input:checked+.box::after{content:"✓"}
+.opt input:focus-visible+.box{outline:2px solid var(--acc);outline-offset:2px}
+.opt .lb{display:flex;flex-direction:column;line-height:1.45;min-width:0}
+.opt .lb b{font-size:14.5px}
+.opt .lb small{color:var(--sub);font-size:12.5px}
+.letter{font-family:var(--mono);font-weight:700;color:var(--acc);margin-right:4px}
+.row-btns{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:7px 14px;font-size:13.5px;font-weight:700;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+.chip.main{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+
+/* 年表（アプリの対戦画面をまねたもの） */
+.stage{position:relative;overflow:hidden;background:var(--bg);border:1px solid var(--line);border-radius:22px;padding:12px;display:flex;flex-direction:column;gap:6px;width:100%;max-width:360px;user-select:none;-webkit-user-select:none}
+.stage .msg{min-height:46px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 12px;font-size:13.5px;font-weight:700;display:flex;align-items:center;line-height:1.45}
+.stage .msg.ok{border-color:var(--ok);color:var(--ok);background:var(--okd)}
+.stage .msg.ng{border-color:var(--ng);color:var(--ng);background:var(--ngd)}
+.stage .msg.ask{border-color:var(--acc);color:var(--acc);background:var(--accd)}
+.stage .dir{font-size:11px;color:var(--sub);font-weight:700;text-align:center;line-height:1.4}
+.stage .tl{display:flex;flex-direction:column;justify-content:center;gap:4px;height:var(--tlh,376px)}
+.stage .row{flex:none;height:30px;display:flex;align-items:center;gap:10px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:14.5px;position:relative}
+.stage .row .y{font-family:var(--mono);width:40px;flex:none;color:var(--sub);font-size:13px;display:inline-block;text-align:left}
+.stage .row .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.stage .row.ok{border:2px solid var(--ok);background:var(--okd)}
+.stage .row.ok .y{color:var(--ok);font-weight:700}
+.stage .row.ng{border:2px solid var(--ng);background:var(--ngd)}
+.stage .row.ng .y{color:var(--ng);font-weight:700}
+.stage .row.lift{z-index:3;box-shadow:0 6px 16px var(--shadow)}
+.stage .slot{flex:none;height:28px;border:1.5px dashed var(--acc);border-radius:8px;background:var(--accd);color:var(--acc);font-size:12.5px;font-weight:700;line-height:1;padding:0}
+.stage .slot.pre{background:var(--acc);color:var(--onacc);border-style:solid;height:32px}
+.stage .hand{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;height:64px;margin-top:4px}
+.stage .hc{border:1px solid var(--line);background:var(--panel);border-radius:10px;font-size:12.5px;font-weight:700;line-height:1.3;padding:4px;color:var(--ink);word-break:auto-phrase;text-wrap:balance;line-break:strict}
+.stage.live .hc{border:2px solid var(--acc)}
+.stage .hc.on{border:2px solid var(--acc);background:var(--accd);color:var(--acc)}
+.stage .hc.gone{visibility:hidden}
+.stage .fly{position:absolute;z-index:5;border:2px solid var(--acc);background:var(--panel);color:var(--ink);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 8px 20px var(--shadow);pointer-events:none;overflow:hidden;white-space:nowrap;padding:0 6px}
+.stage .gapchip{position:absolute;z-index:4;right:24px;transform:translateY(-50%);font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--acc);background:var(--panel);border:1px solid var(--acc);border-radius:99px;padding:0 8px;line-height:18px;pointer-events:none;white-space:nowrap}
+.stage .deckmark{position:absolute;right:14px;bottom:86px;font-size:11px;color:var(--sub)}
+
+/* 案ごとのカード */
+.props{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,310px),1fr));gap:20px}
+.prop{border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--panel);min-width:0}
+.prop .hd{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.prop .stage{max-width:none;--tlh:206px;padding:10px}
+.prop .stage .msg{min-height:40px;font-size:12.5px}
+.badge{flex:none;font-size:12px;font-weight:700;border-radius:99px;padding:2px 10px;border:1px solid var(--acc);color:var(--acc);line-height:1.6}
+.badge.rec{background:var(--acc);color:var(--onacc)}
+.badge.low{border-color:var(--line);color:var(--sub)}
+.prop dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:13.5px}
+.prop dt{color:var(--sub);font-weight:700}
+.prop dd{margin:0}
+.prop .replay{align-self:flex-start}
+
+/* まとめ */
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px}
+.box2{border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.box2 ul,.box2 ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px}
+.box2 li b{font-weight:700}
+.sub{color:var(--sub)}
+.mono{font-family:var(--mono)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">年号ならべバトル（仮）・見た目の提案</div>
+    <h1>カードを置いたときの動き 7つの案</h1>
+    <p class="lead">今のアプリは、カードを置くと年表の行の色が変わるだけです。置いたカードがどこへ行ったか、間違えたらどこが正しかったかを、目で追えるようにする動きを7つ考えました。下の年表で実際に触って、入れる・入れないを選べます。</p>
+    <p class="note" id="rmNote" hidden>この端末は「動きを減らす」設定になっているため、動きを止めて表示しています。<button class="chip" id="rmForce" type="button" style="margin-left:6px">それでも動きを見る</button></p>
+  </header>
+
+  <section class="try" aria-labelledby="tryTitle">
+    <div class="stage live" id="live"></div>
+    <div class="ctrl">
+      <div>
+        <h2 id="tryTitle">触って試す</h2>
+        <p class="sub">左の年表は対戦画面をまねたものです。手札を1枚えらび、「＋ ここ？」を2回タップすると置けます。わざと間違えると、不正解のときの動きも見られます。</p>
+      </div>
+      <div>
+        <h3>まとめて切り替え</h3>
+        <div class="row-btns" id="presets">
+          <button class="chip" type="button" data-p="none">今のアプリ（動きなし）</button>
+          <button class="chip" type="button" data-p="rec">おすすめの組み合わせ</button>
+          <button class="chip" type="button" data-p="all">全部入り</button>
+        </div>
+      </div>
+      <div>
+        <h3>入れる動き</h3>
+        <div class="opts" id="opts"></div>
+      </div>
+      <div>
+        <h3>速さ</h3>
+        <div class="row-btns" id="speed">
+          <button class="chip" type="button" data-s="1" aria-pressed="true">ふつう（本番の速さ）</button>
+          <button class="chip" type="button" data-s="2.5" aria-pressed="false">ゆっくり（確認用）</button>
+        </div>
+      </div>
+      <div class="row-btns">
+        <button class="chip main" type="button" id="resetLive">年表を最初にもどす</button>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="propTitle">
+    <h2 id="propTitle">案ごとの説明</h2>
+    <p class="sub" style="margin-bottom:18px">それぞれの年表は、その案の動きだけを入れたものです。「もう一度見る」でくり返し見られます。</p>
+    <div class="props" id="props"></div>
+  </section>
+
+  <section class="two" aria-label="まとめ">
+    <div class="box2">
+      <h2>おすすめの組み合わせ</h2>
+      <p><b>A 手札から飛ぶ ＋ B 年表が開く ＋ D 正しい場所へすべる ＋ F 手札が詰まる・1枚引く</b></p>
+      <p class="sub">どれも「何が起きたか」を伝える動きで、待ち時間はほとんど増えません。1手にかかる時間は、正解でおよそ0.5秒、不正解でおよそ2秒です。CとEは学びには効きますが、1手ごとの間が少し長くなるので、先生に触ってもらってから決めるのがよさそうです。</p>
+    </div>
+    <div class="box2">
+      <h2>入れない方がよいもの</h2>
+      <ul>
+        <li>紙吹雪やキラキラ、大きな「すごい！」の文字（子どもっぽくなる）</li>
+        <li>画面全体が揺れる・点滅する演出（あせらせる）</li>
+        <li>連続正解をあおる表示（早押しと同じで逆効果）</li>
+        <li>1秒を超えて操作を止める長い演出（クラス全員の対戦のテンポが落ちる）</li>
+      </ul>
+    </div>
+    <div class="box2">
+      <h2>決めてほしいこと</h2>
+      <ol>
+        <li>どの案を入れるか（A〜Gから）</li>
+        <li>相手の画面でも同じ動きを見せるか（おすすめ：見せる。相手の番も「どこに入るか考える」時間になる）</li>
+        <li>動いている間は持ち時間30秒を止めるか（おすすめ：止める）</li>
+        <li>効果音を動きの終わりに合わせるか（今は置いた瞬間に鳴る）</li>
+      </ol>
+    </div>
+  </section>
+</div>
+
+<script>
+(()=>{
+const CARDS={
+  taika:{t:'大化の改新',y:645},heian:{t:'平安京に都を移す',y:794},jokyu:{t:'承久の乱',y:1221},onin:{t:'応仁の乱',y:1467},seki:{t:'関ヶ原の戦い',y:1600},
+  teppo:{t:'鉄砲伝来',y:1543},dan:{t:'壇ノ浦の戦い',y:1185},taiho:{t:'大宝律令',y:701},
+  daibutsu:{t:'東大寺の大仏開眼',y:752},honno:{t:'本能寺の変',y:1582},insei:{t:'院政の開始',y:1086}
+};
+const LINE=['taika','heian','jokyu','onin','seki'];
+const OPTS=[
+  {k:'fly',  n:'手札から飛んでいく', s:'選んだカードが年表の置いた場所まで動く', badge:'rec', time:'約0.4秒',
+   what:'手札のカードが、置いた場所まで飛んでいって年表に入ります。',
+   why:'どのカードをどこに置いたかが一目で分かります。相手の画面でも「相手が何を出したか」を追えます。', demo:['teppo',4]},
+  {k:'open', n:'年表がすっと開く', s:'前後のカードが上下に分かれて場所ができる', badge:'rec', time:'約0.3秒（Aと同時）',
+   what:'置いた場所の上下のカードが少しずつずれて、カード1枚ぶんのすき間ができます。',
+   why:'行がいきなり増えると、どこに入ったか見失いやすいためです。Aと組み合わせると自然です。', demo:['teppo',4]},
+  {k:'flip', n:'年号をめくって答え合わせ', s:'置いた直後は「？」、めくると年号が出る', badge:'', time:'約0.5秒ふえる',
+   what:'置いた直後は年号が「？」のまま。ひと呼吸おいて、年号がくるっとめくれて正解か不正解かが分かります。',
+   why:'「たぶん何年だ」と思い出してから確かめる間ができます（思い出す練習が記憶に効く）。そのぶん1手が少し長くなります。', demo:['teppo',4]},
+  {k:'slide',n:'正しい場所へすべる', s:'不正解のカードが正しい場所まで動く', badge:'rec', time:'約0.6秒',
+   what:'間違えた場所にいったん入ったあと、正しい場所まですべって移動します。今は一瞬で入れかわります。',
+   why:'どこが正しかったかを、動きで見せられます（間違えた直後に正解を見せる）。引き継ぎメモで「まだやっていないこと」に入っていたものです。', demo:['dan',1]},
+  {k:'gaps', n:'前後との年の差を見せる', s:'入った場所の上下に「○年」と出る', badge:'', time:'約2秒表示（操作は止めない）',
+   what:'カードが正しい場所に入ったあと、上下のカードとのあいだに「76年」「57年」のような年の差が少しのあいだ出ます。',
+   why:'出来事どうしの間隔の感覚がつき、時代のつながりで覚えやすくなります。情報が増えるので、うるさく感じないかは確認が必要です。', demo:['teppo',4]},
+  {k:'hand', n:'手札が詰まる・1枚引く', s:'手札が減る・増えるのが分かる', badge:'rec', time:'約0.3秒',
+   what:'出したカードのあとが左に詰まります。不正解のときは、新しいカードが上からすっと手札に入ります。',
+   why:'「あと何枚」が増えた・減ったことに気づきやすくなります。', demo:['dan',1]},
+  {k:'shake',n:'不正解で小さく揺れる', s:'間違えたカードだけ1回だけ小さく揺れる', badge:'low', time:'約0.3秒',
+   what:'不正解のカードだけが、左右に小さく1回揺れます。画面全体は揺らしません。',
+   why:'色だけより不正解が伝わりやすくなります。ただ、強くするとあせらせる演出になるので、入れるならこの程度までです。', demo:['dan',1]},
+];
+const PRESET={none:[],rec:['fly','open','slide','hand'],all:OPTS.map(o=>o.k)};
+const BADGE={rec:'おすすめ','':'検討',low:'入れるなら控えめに'};
+
+const reduce=matchMedia('(prefers-reduced-motion: reduce)');
+let force=false,speed=1;
+const T=ms=>(reduce.matches&&!force)?0:ms*speed;
+const W=ms=>ms*speed;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const EASE='cubic-bezier(.2,.7,.2,1)';
+const rects=els=>{const m=new Map;els.forEach(e=>m.set(e,e.getBoundingClientRect()));return m};
+const flip=(els,before,dur,ease)=>Promise.all(els.map(e=>{const a=before.get(e);if(!a||!e.isConnected)return;const b=e.getBoundingClientRect();const dx=a.left-b.left,dy=a.top-b.top;if(!dx&&!dy)return;return e.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:dur,easing:ease||EASE}).finished}));
+
+class Stage{
+  constructor(root,cfg){
+    this.root=root;this.cfg=cfg;this.interactive=!!cfg.interactive;this.getOpts=cfg.opts;
+    root.innerHTML='<div class="msg"></div><div class="dir">▲ むかし（年が古い）</div><div class="tl"></div><div class="dir">▼ さいきん（年が新しい）</div><div class="hand"></div>';
+    this.msg=root.querySelector('.msg');this.tl=root.querySelector('.tl');this.hd=root.querySelector('.hand');
+    if(this.interactive)root.addEventListener('click',e=>this.onClick(e));
+    this.reset();
+  }
+  reset(){
+    this.run=(this.run||0)+1;
+    this.root.querySelectorAll('.fly,.gapchip').forEach(e=>e.remove());
+    this.line=[...LINE];this.hand=[...this.cfg.hand];this.deck=[...(this.cfg.deck||[])];
+    this.sel=null;this.gap=null;this.preview=null;this.busy=false;this.lastK=null;
+    this.renderAll();
+    this.setMsg(this.interactive?'手札から1枚えらぼう':'カードを置くところ','ask');
+  }
+  setMsg(t,cls){this.msg.className='msg '+(cls||'');this.msg.textContent=t}
+  rowEl(id){const c=CARDS[id],d=document.createElement('div');d.className='row';d.dataset.k=id;d.innerHTML=`<span class="y">${c.y}</span><span class="t"></span>`;d.querySelector('.t').textContent=c.t;return d}
+  renderTL(){
+    this.tl.replaceChildren();
+    const placing=this.interactive&&this.sel&&!this.busy;
+    const slot=g=>{
+      if(this.preview===g){const b=document.createElement('button');b.type='button';b.className='slot pre';b.textContent='ここに置く（もう一度タップで決定）';b.tabIndex=-1;this.tl.append(b);return}
+      if(!placing)return;
+      const b=document.createElement('button');b.type='button';b.dataset.g=g;
+      if(this.gap===g){b.className='slot pre';b.textContent='ここに置く（もう一度タップで決定）'}else{b.className='slot';b.textContent='＋ ここ？'}
+      this.tl.append(b)};
+    this.line.forEach((id,i)=>{slot(i);const r=this.rowEl(id);if(id===this.lastK)r.classList.add(this.lastOk?'ok':'ng');this.tl.append(r)});
+    slot(this.line.length);
+  }
+  handBtn(id){const b=document.createElement('button');b.type='button';b.className='hc';b.dataset.k=id;b.textContent=CARDS[id].t;if(!this.interactive)b.tabIndex=-1;return b}
+  renderHand(){this.hd.replaceChildren(...this.hand.map(id=>{const b=this.handBtn(id);if(this.sel===id)b.classList.add('on');return b}))}
+  renderAll(){this.renderTL();this.renderHand()}
+  onClick(e){
+    if(this.busy)return;const t=e.target.closest('button');if(!t||!this.root.contains(t))return;
+    if(t.classList.contains('hc')){const k=t.dataset.k;this.sel=this.sel===k?null:k;this.gap=null;this.renderAll();
+      if(this.sel)this.setMsg(`「${CARDS[k].t}」はどこに入る？`,'ask');else this.setMsg('手札から1枚えらぼう','ask')}
+    else if(t.dataset.g!=null){const g=+t.dataset.g;if(this.gap===g)this.place(this.sel,g);else{this.gap=g;this.renderTL()}}
+  }
+  async demo(k,g){
+    this.reset();const run=this.run;
+    await sleep(W(500));if(run!==this.run)return;
+    this.sel=k;this.renderHand();this.setMsg(`「${CARDS[k].t}」はどこに入る？`,'ask');
+    await sleep(W(600));if(run!==this.run)return;
+    this.preview=g;this.renderTL();
+    await sleep(W(700));if(run!==this.run)return;
+    this.preview=null;await this.place(k,g);
+  }
+  async place(k,g){
+    const run=this.run,o=this.getOpts(),c=CARDS[k],L=this.line,alive=()=>run===this.run;
+    this.busy=true;
+    const ok=(g===0||CARDS[L[g-1]].y<=c.y)&&(g===L.length||c.y<=CARDS[L[g]].y);
+    const src=this.hd.querySelector(`[data-k="${k}"]`);const sr=src.getBoundingClientRect();
+    this.sel=null;this.gap=null;this.lastK=null;
+    this.renderTL();
+    [...this.hd.children].forEach(b=>b.classList.remove('on'));src.classList.add('gone');
+    this.setMsg(o.flip?'答え合わせ…':`「${c.t}」を置いた`,'');
+    // 年表に入れる
+    const rows=[...this.tl.children],before=rects(rows);
+    L.splice(g,0,k);
+    const nr=this.rowEl(k),yEl=nr.querySelector('.y');if(o.flip)yEl.textContent='？';
+    this.tl.insertBefore(nr,rows[g]||null);
+    const moves=[];
+    if(o.open)moves.push(flip(rows,before,T(320)));
+    if(o.fly){
+      nr.style.visibility='hidden';
+      const rr=this.root.getBoundingClientRect(),dr=nr.getBoundingClientRect();
+      const f=document.createElement('div');f.className='fly';f.textContent=c.t;this.root.append(f);
+      const from={left:(sr.left-rr.left)+'px',top:(sr.top-rr.top)+'px',width:sr.width+'px',height:sr.height+'px'};
+      const to={left:(dr.left-rr.left)+'px',top:(dr.top-rr.top)+'px',width:dr.width+'px',height:dr.height+'px'};
+      Object.assign(f.style,to);
+      moves.push(f.animate([from,to],{duration:T(440),easing:EASE}).finished.then(()=>{f.remove();nr.style.visibility=''}));
+    }
+    await Promise.all(moves);if(!alive())return;
+    // 手札から抜く
+    const others=[...this.hd.children].filter(b=>b!==src),hb=rects(others);
+    this.hand=this.hand.filter(x=>x!==k);src.remove();
+    const handMove=o.hand?flip(others,hb,T(260)):Promise.resolve();
+    // 年号をめくる
+    if(o.flip){
+      await sleep(W(250));if(!alive())return;
+      await yEl.animate([{transform:'rotateX(0)'},{transform:'rotateX(90deg)'}],{duration:T(170),easing:'ease-in',fill:'forwards'}).finished;
+      yEl.textContent=c.y;
+      await yEl.animate([{transform:'rotateX(90deg)'},{transform:'rotateX(0)'}],{duration:T(210),easing:'ease-out',fill:'forwards'}).finished;
+      if(!alive())return;
+    }
+    nr.classList.add(ok?'ok':'ng');
+    this.setMsg(ok?`正解！ ${c.t}は${c.y}年`:`ざんねん… ${c.t}は${c.y}年`,ok?'ok':'ng');
+    if(!ok){
+      if(o.shake)await nr.animate([{transform:'none'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-3px)'},{transform:'none'}],{duration:T(320),easing:'ease-in-out'}).finished;
+      await sleep(W(o.slide?500:0));if(!alive())return;
+      L.splice(L.indexOf(k),1);let cg=L.findIndex(x=>CARDS[x].y>c.y);if(cg<0)cg=L.length;L.splice(cg,0,k);
+      const rs=[...this.tl.children],bf=rects(rs),rest=rs.filter(r=>r!==nr);
+      this.tl.insertBefore(nr,rest[cg]||null);
+      if(o.slide){nr.classList.add('lift');await flip(rs,bf,T(620),'cubic-bezier(.45,0,.2,1)');nr.classList.remove('lift')}
+      if(!alive())return;
+      await handMove;
+      if(this.deck.length){
+        const d=this.deck.shift();this.hand.push(d);const b=this.handBtn(d);this.hd.append(b);
+        if(o.hand)await b.animate([{transform:'translateY(-16px)',opacity:0},{transform:'none',opacity:1}],{duration:T(320),easing:EASE}).finished;
+        this.setMsg(`ざんねん… ${c.t}は${c.y}年。手札が1枚ふえた`,'ng');
+      }
+    }
+    if(!alive())return;
+    if(o.gaps)this.showGaps(nr,k);
+    await handMove;if(!alive())return;
+    this.lastK=k;this.lastOk=ok;this.busy=false;
+    this.renderAll();
+    if(this.interactive&&!this.hand.length)this.setMsg('手札が0枚！ この1本はあなたの勝ち','ok');
+  }
+  showGaps(nr,k){
+    const L=this.line,i=L.indexOf(k),y=CARDS[k].y,rr=this.root.getBoundingClientRect(),run=this.run;
+    const add=(top,txt)=>{const s=document.createElement('div');s.className='gapchip';s.textContent=txt;s.style.top=(top-rr.top)+'px';this.root.append(s);
+      s.animate([{opacity:0},{opacity:1}],{duration:T(200),fill:'forwards'});
+      setTimeout(()=>{if(!s.isConnected)return;s.animate([{opacity:1},{opacity:0}],{duration:T(300),fill:'forwards'}).finished.then(()=>s.remove())},W(2200))};
+    const me=nr.getBoundingClientRect();
+    const fmt=d=>d===0?'同じ年':`${d}年`;
+    if(i>0){const p=this.tl.querySelector(`[data-k="${L[i-1]}"]`).getBoundingClientRect();add((p.bottom+me.top)/2,'↕ '+fmt(y-CARDS[L[i-1]].y))}
+    if(i<L.length-1){const n=this.tl.querySelector(`[data-k="${L[i+1]}"]`).getBoundingClientRect();add((me.bottom+n.top)/2,'↕ '+fmt(CARDS[L[i+1]].y-y))}
+  }
+}
+
+// 試せる年表
+const on=new Set(PRESET.rec);
+const optsEl=document.getElementById('opts');
+const letters='ABCDEFG';
+OPTS.forEach((o,i)=>{
+  const l=document.createElement('label');l.className='opt';
+  l.innerHTML=`<input type="checkbox" id="opt-${o.k}"><span class="box" aria-hidden="true"></span><span class="lb"><b><span class="letter">${letters[i]}</span></b><small></small></span>`;
+  l.querySelector('b').append(o.n);l.querySelector('small').textContent=o.s;
+  const cb=l.querySelector('input');cb.checked=on.has(o.k);
+  cb.addEventListener('change',()=>{cb.checked?on.add(o.k):on.delete(o.k);syncPresets()});
+  optsEl.append(l);
+});
+const presetBtns=[...document.querySelectorAll('#presets .chip')];
+function syncPresets(){presetBtns.forEach(b=>{const p=PRESET[b.dataset.p];b.setAttribute('aria-pressed',String(p.length===on.size&&p.every(k=>on.has(k))))})}
+presetBtns.forEach(b=>b.addEventListener('click',()=>{on.clear();PRESET[b.dataset.p].forEach(k=>on.add(k));OPTS.forEach(o=>document.getElementById('opt-'+o.k).checked=on.has(o.k));syncPresets()}));
+syncPresets();
+const liveOpts=()=>Object.fromEntries(OPTS.map(o=>[o.k,on.has(o.k)]));
+const live=new Stage(document.getElementById('live'),{interactive:true,opts:liveOpts,hand:['teppo','dan','taiho'],deck:['daibutsu','honno','insei']});
+document.getElementById('resetLive').addEventListener('click',()=>live.reset());
+document.querySelectorAll('#speed .chip').forEach(b=>b.addEventListener('click',()=>{speed=+b.dataset.s;document.querySelectorAll('#speed .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
+
+// 案ごとの年表
+const propsEl=document.getElementById('props');
+const minis=[];
+OPTS.forEach((o,i)=>{
+  const a=document.createElement('article');a.className='prop';
+  a.innerHTML=`<div class="hd"><h3><span class="letter">${letters[i]}</span></h3><span class="badge ${o.badge}">${BADGE[o.badge]}</span></div><div class="stage"></div><button class="chip replay" type="button">もう一度見る</button><p class="what"></p><dl><dt>ねらい</dt><dd class="why"></dd><dt>長さ</dt><dd class="time"></dd></dl>`;
+  a.querySelector('h3').append(o.n);a.querySelector('.what').textContent=o.what;a.querySelector('.why').textContent=o.why;a.querySelector('.time').textContent=o.time;
+  propsEl.append(a);
+  const st=new Stage(a.querySelector('.stage'),{opts:()=>({[o.k]:true}),hand:['teppo','dan','taiho'],deck:['daibutsu']});
+  const play=()=>st.demo(...o.demo);
+  a.querySelector('.replay').addEventListener('click',play);
+  minis.push({el:a,play,done:false});
+});
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;const m=minis.find(x=>x.el===e.target);if(m&&!m.done){m.done=true;m.play()}io.unobserve(e.target)}),{threshold:.6});
+  minis.forEach(m=>io.observe(m.el));
+}
+
+// 動きを減らす設定
+const rmNote=document.getElementById('rmNote');
+const syncRm=()=>{rmNote.hidden=!reduce.matches||force};
+reduce.addEventListener?.('change',syncRm);syncRm();
+document.getElementById('rmForce').addEventListener('click',()=>{force=true;syncRm()});
+})();
+</script>
