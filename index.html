@@ -141,6 +141,9 @@ input::placeholder{color:var(--ph)}
 .panel .res{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;font-weight:700}
 .panel.ok .res{color:var(--ok)}.panel.ng .res{color:var(--ng)}
 .panel .res small{font-size:12px}
+.bgmb{position:absolute!important;right:0;top:50%;transform:translateY(-50%);border:1px solid var(--line);background:var(--panel);color:var(--sub);border-radius:99px;font-size:11px;font-weight:700;padding:2px 9px;line-height:18px;position:relative}
+.bgmb::after{content:"";position:absolute;inset:-12px -6px}
+.bgmb.on{border-color:var(--acc);color:var(--acc)}
 .confirm{position:fixed;left:0;right:0;bottom:0;z-index:65;max-width:520px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-bottom:none;border-radius:18px 18px 0 0;box-shadow:0 -12px 30px rgba(27,34,51,.18);padding:12px 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;animation:sheet .2s ease-out}
 .confirm .q{font-size:16px;font-weight:900;text-align:center;line-height:1.4}
 .confirm .q span{color:var(--acc)}
@@ -256,6 +259,20 @@ const SFX=(()=>{let ctx=null,on=true;try{on=localStorage.getItem('nb-sfx')!=='0'
   return{get on(){return on},
     toggle(){on=!on;try{localStorage.setItem('nb-sfx',on?'1':'0')}catch(e){}if(on)this.play('pick');return on},
     play(n){if(!on||!SEQ[n])return;try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!ctx)ctx=new AC();if(ctx.state==='suspended')ctx.resume();const t=ctx.currentTime+.01;SEQ[n].forEach(a=>tone(a[0],t+a[1],a[2],a[3],a[4]))}catch(e){}}}})();
+/* ========== BGM（対戦中だけ流す。オン・オフは端末ごとに覚える。音量は VOL） ==========
+   スマホは最初のタップまで音を出せないので、最初のタップで準備しておく */
+const BGM=(()=>{let on=true;try{on=localStorage.getItem('nb-bgm')!=='0'}catch(e){}
+  const VOL=.35;let a=null,ctx=null,g=null,want=false;
+  function init(){if(a)return;a=new Audio('bgm.mp3');a.loop=true;a.preload='auto';
+    try{const AC=window.AudioContext||window.webkitAudioContext;ctx=new AC();g=ctx.createGain();g.gain.value=0;ctx.createMediaElementSource(a).connect(g);g.connect(ctx.destination)}catch(e){ctx=null;g=null;a.volume=0}}
+  function level(v,ms){if(g){const t=ctx.currentTime;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(v,t+ms/1000)}else a.volume=v}
+  function apply(){if(!a)return;if(want&&on){if(ctx&&ctx.state==='suspended')ctx.resume();if(a.paused)a.play().catch(()=>{});level(VOL,900)}
+    else if(!a.paused){level(0,500);setTimeout(()=>{if(!(want&&on))a.pause()},550)}}
+  return{get on(){return on},get playing(){return !!a&&!a.paused&&want&&on},
+    toggle(){on=!on;try{localStorage.setItem('nb-bgm',on?'1':'0')}catch(e){}init();apply();return on},
+    set(w){if(w===want)return;want=w;apply()},
+    unlock(){if(a)return;init();if(ctx&&ctx.state==='suspended')ctx.resume();a.play().then(()=>{if(!(want&&on))a.pause()}).catch(()=>{});apply()}}})();
+addEventListener('click',()=>BGM.unlock(),true);
 function sfxMatch(pv,m){if(!m)return;const u=S.uid;if(!pv){if(m.phase==='bet')SFX.play('match');return}
   if(m.last&&m.last.to&&(!pv.last||pv.last.at!==m.last.at))SFX.play('ng');
   if(m.phase==='play'&&m.turn===u&&(pv.turn!==u||pv.phase!=='play'))setTimeout(()=>SFX.play('turn'),m.last&&DB.now()-m.last.at<1500?(m.last.ok||m.last.to?1000:2300):0);
@@ -473,6 +490,7 @@ function homeErr(t){const e=$('#herr');if(e)e.textContent=t}
 /* ========== 画面 ========== */
 function render(){
   let h,wide=false;S.compact=false;
+  {const m=S.match;BGM.set(!!(S.role==='student'&&S.assign&&m&&(m.phase==='play'||m.phase==='roundEnd')))}
   if(!S.role)h=vHome();
   else if(S.role==='teacher'){h=vTeacher();wide=true}
   else if(!me())h=`<div class="home"><div class="sub center">読みこみ中…</div></div>`;
@@ -490,10 +508,10 @@ function vHome(){const pre=new URLSearchParams(location.search).get('room')||'';
   <div class="err" id="herr">${esc(S.homeErr)}</div><button class="link" data-act="homes">生徒の画面にもどる</button>${demo}</div>`;
   return `<div class="home">${title}
   <div class="col" style="margin-top:8px"><input id="code" inputmode="numeric" maxlength="6" placeholder="合言葉（6けた）" value="${esc(pre)}"><input id="name" maxlength="8" placeholder="ニックネーム"><button class="btn" data-act="join">部屋に入る</button></div>
-  <div class="err" id="herr">${esc(S.homeErr)}</div><button class="link" data-act="sfx">効果音：${SFX.on?'オン':'オフ'}（タップで切りかえ）</button><button class="link" data-act="homet">先生はこちら</button>${demo}</div>`}
+  <div class="err" id="herr">${esc(S.homeErr)}</div><button class="link" data-act="sfx">効果音：${SFX.on?'オン':'オフ'}（タップで切りかえ）</button><button class="link" data-act="bgm">対戦中のBGM：${BGM.on?'オン':'オフ'}（タップで切りかえ）</button><button class="link" data-act="homet">先生はこちら</button>${demo}</div>`}
 function ranked(){return Object.keys(S.players).map(u=>Object.assign({u},S.players[u])).sort((a,b)=>(b.g||0)-(a.g||0)||(b.w||0)-(a.w||0))}
 function vLobby(){const p=me(),r=ranked(),my=r.findIndex(x=>x.u===S.uid);let top=r.slice(0,5);if(my>=5)top=r.slice(0,4).concat([r[my]]);
-  return `<div class="top"><span>部屋 <b class="mono">${esc(S.code)}</b>　${esc(p.n)}</span><button class="link" data-act="sfx" style="padding:0">効果音：${SFX.on?'オン':'オフ'}</button></div>
+  return `<div class="top"><span>部屋 <b class="mono">${esc(S.code)}</b>　${esc(p.n)}</span><span><button class="link" data-act="bgm" style="padding:0;margin-right:12px">BGM：${BGM.on?'オン':'オフ'}</button><button class="link" data-act="sfx" style="padding:0">効果音：${SFX.on?'オン':'オフ'}</button></span></div>
   <div class="card center col" style="gap:4px"><div class="label">あなたのジェム</div><div class="big gem">💎 ${p.g||0}</div><div class="sub">${my+1}位 ／ ${r.length}人　${p.w||0}勝 ${p.l||0}敗</div></div>
   <div class="rank">${top.map(x=>`<div class="${x.u===S.uid?'me':''}"><span>${r.indexOf(x)+1}位　${esc(x.n)}</span><span class="gem">💎 ${x.g||0}</span></div>`).join('')}</div>
   <div class="grow"></div>
@@ -526,7 +544,7 @@ function vPlay(m){const u=S.uid,o=other(m,u),on=m.phase==='play',mine=m.turn===u
   const cols=Math.max(3,hand.length);
   return `<div class="race"><div class="${mine?'act':''}"><span>あなた<em>${m.wins[u]}本</em></span><b>あと${hand.length}枚</b></div><div class="${on&&!mine?'act':''}"><span>${oppN}<em>${m.wins[o]}本</em></span><b>あと${m.hands[o].length}枚</b></div></div>
   <div class="goal"><span>${m.firstOut&&on?'相手は出し切った。これが最後の1手':'先に0枚で1本・2本とったら勝ち'}</span><span class="mono timer" id="tt"></span></div>
-  ${panel}<div class="dir">▲ むかし<small>年が古い</small></div><div class="tl ${canPick&&!m.pick?'dim':''} ${thin?'thin':''}">${tl}</div><div class="dir">▼ さいきん<small>年が新しい</small></div>
+  ${panel}<div class="dir" style="position:relative">▲ むかし<small>年が古い</small><button class="bgmb ${BGM.on?'on':''}" data-act="bgm">♪ BGM ${BGM.on?'オン':'オフ'}</button></div><div class="tl ${canPick&&!m.pick?'dim':''} ${thin?'thin':''}">${tl}</div><div class="dir">▼ さいきん<small>年が新しい</small></div>
   <div class="foot"><span>自分の手札${mine&&m.pick?'（タップで選び直せます）':RULE.drag&&canPick?'（年表へ引っぱっても選べます）':''}</span><span class="gem">💎 ${m.bet[u]} vs ${m.bet[o]}</span></div>
   <div class="hand ${canPick?'':'dim'} ${hand.length>=6?'many':''}">${hand.map(id=>`<button class="hc ${CARDS[id].title.length>10?'l':CARDS[id].title.length>7?'m':''} ${m.pick===id&&mine?'on':canPick&&!m.pick?'can':''}" data-k="${id}" ${canPick?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`+(RULE.drag&&placing&&S.sel!=null?`<div class="confirm"><div class="q">「<span>${esc(CARDS[m.pick].title)}</span>」をここに置く？</div><div class="cb"><button class="btn ghost" data-act="cancelgap">やめる</button><button class="btn" data-act="confirmgap">ここに置く</button></div></div>`:'')}
 function goro(c){return c.goro?`<div class="goro"><b>覚え方</b>${esc(c.goro).replace(/（(\d+)）/g,'（<em>$1</em>）')}</div>`:''}
@@ -579,6 +597,7 @@ function tick(){
 app.addEventListener('click',e=>{if(Date.now()-dragEnd<300)return;const t=e.target.closest('[data-act]');if(!t||t.disabled)return;const a=t.dataset.act,m=S.match;
   if(a==='pick')SFX.play('pick');else if(a==='gap'||a==='rowgap')SFX.play('sel');else if(a!=='key'&&a!=='sfx'&&a!=='confirmgap')SFX.play('tap');
   if(a==='sfx'){SFX.toggle();S.homeDirty=true;render();return}
+  if(a==='bgm'){BGM.toggle();S.homeDirty=true;lastHtml='';render();return}
   if(a==='join')joinRoom().catch(()=>homeErr('通信できませんでした'));
   else if(a==='homet'||a==='homes'){S.homeT=a==='homet';S.homeDirty=true;render()}
   else if(a==='create')createRoom().catch(()=>homeErr('通信できませんでした'));
