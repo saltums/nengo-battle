@@ -125,6 +125,7 @@ input::placeholder{color:var(--ph)}
 .hc.on::before{background:#2a3fc7}
 .drag-card{position:fixed!important;z-index:70;pointer-events:none;margin:0;transform:rotate(-3deg) scale(1.04)!important;box-shadow:0 14px 28px rgba(27,34,51,.3)!important;border:2px solid var(--acc)!important}
 .tr.dph{border:2px dashed var(--acc);background:var(--accd)}
+.tr.dph.idle{visibility:hidden}
 .tl.dragging .slot,.tl.dragging .tr.pre{display:none}
 .tr.pre.dp{justify-content:space-between;font-weight:900}
 .tr.pre.dp .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -145,7 +146,7 @@ input::placeholder{color:var(--ph)}
 .bgmb::after{content:"";position:absolute;inset:-12px -6px}
 .bgmb.on{border-color:var(--acc);color:var(--acc)}
 .confirm{position:fixed;left:0;right:0;bottom:0;z-index:65;max-width:520px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-bottom:none;border-radius:18px 18px 0 0;box-shadow:0 -12px 30px rgba(27,34,51,.18);padding:12px 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;animation:sheet .2s ease-out}
-.confirm .q{font-size:16px;font-weight:900;text-align:center;line-height:1.4}
+.confirm .q{font-size:16px;font-weight:900;text-align:center;line-height:1.4;word-break:auto-phrase;text-wrap:balance}
 .confirm .q span{color:var(--acc)}
 .confirm .cb{display:grid;grid-template-columns:1fr 2fr;gap:10px}
 .confirm .btn{padding:13px}
@@ -370,14 +371,18 @@ addEventListener('resize',layoutHand);
 let DRAG=null,dragEnd=0;
 const tlRows=()=>[...app.querySelectorAll('.tl .tr[data-k]')];
 // カードの真ん中の高さ y が、年表のどのすき間に当たるか（開けたすき間の上にいる間は、そのまま）
-function dragGap(d,y){if(d.ph&&d.ph.isConnected){const r=d.ph.getBoundingClientRect();if(y>=r.top-3&&y<=r.bottom+3)return d.g}
+function dragGap(d,y){if(d.ph&&d.ph.isConnected&&!d.ph.classList.contains('idle')){const r=d.ph.getBoundingClientRect();if(y>=r.top-3&&y<=r.bottom+3)return d.g}
   const tl=app.querySelector('.tl');if(!tl)return null;const tr=tl.getBoundingClientRect();if(y<tr.top-30||y>tr.bottom+30)return null;
   const rows=tlRows();for(let i=0;i<rows.length;i++){const r=rows[i].getBoundingClientRect();if(y<(r.top+r.bottom)/2)return i}return rows.length}
 // 年表にカード1枚ぶんのすき間を開ける（前後のカードがすっとずれる）
+// 年表にカード1枚ぶんのすき間を開ける（前後のカードがすっとずれる）
+// すき間は引っぱり始めから1つ用意しておき、場所を動かすだけにする（年表全体がずれないように）
 function dragOpen(d,g){const tl=app.querySelector('.tl');if(!tl)return;tl.classList.add('dragging');
-  if(g===d.g&&d.ph&&d.ph.isConnected)return;const all=[...tl.children].filter(e=>e!==d.ph),before=new Map(all.map(e=>[e,e.getBoundingClientRect()]));
-  if(g==null){if(d.ph)d.ph.remove()}else{if(!d.ph){d.ph=document.createElement('div');d.ph.className='tr dph'}const ref=tlRows()[g];tl.insertBefore(d.ph,ref||null)}
-  if(g!==d.g&&g!=null)SFX.play('tap');d.g=g;flipFrom(all,e=>before.get(e),150)}
+  if(!d.ph){d.ph=document.createElement('div');d.ph.className='tr dph idle'}
+  const fresh=!d.ph.isConnected;if(fresh){d.ph.classList.add('idle');tl.append(d.ph);d.g=null}
+  if(g===d.g&&!fresh)return;const all=[...tl.children].filter(e=>e!==d.ph),before=new Map(all.map(e=>[e,e.getBoundingClientRect()]));
+  if(g==null){d.ph.classList.add('idle');tl.append(d.ph)}else{d.ph.classList.remove('idle');tl.insertBefore(d.ph,tlRows()[g]||null);if(!fresh)SFX.play('tap')}
+  d.g=g;if(!fresh)flipFrom(all,e=>before.get(e),150)}
 // 引っぱり中の絵を必ず片付ける（指を離したことが届かなかったときの保険）
 function dragReset(){const d=DRAG;DRAG=null;if(d){if(d.ph)d.ph.remove();try{document.body.releasePointerCapture(d.id)}catch(e){}}
   document.querySelectorAll('.drag-card').forEach(e=>e.remove());const tl=app.querySelector('.tl.dragging');if(tl)tl.classList.remove('dragging')}
@@ -391,7 +396,7 @@ addEventListener('pointermove',e=>{const d=DRAG;if(!d||d.id!==e.pointerId||d.don
     d.card=src.cloneNode(true);d.card.classList.remove('on','can');d.card.classList.add('drag-card');d.card.removeAttribute('data-act');
     Object.assign(d.card.style,{width:r.width+'px',height:r.height+'px',left:r.left+'px',top:r.top+'px',visibility:''});document.body.append(d.card);
     if(!S.match||S.match.pick!==d.c){SFX.play('pick');pickCard(d.c)}}
-  e.preventDefault();dragHideSrc(d);
+  e.preventDefault();dragHideSrc(d);if(!d.ph||!d.ph.isConnected)dragOpen(d,null);
   const top=e.clientY-d.h-12;d.card.style.left=(e.clientX-d.w/2)+'px';d.card.style.top=top+'px';
   dragOpen(d,dragGap(d,top+d.h/2))},{passive:false});
 async function dragUp(e){const d=DRAG;if(!d||d.id!==e.pointerId||d.done)return;if(!d.on){DRAG=null;return}d.done=true;dragEnd=Date.now();
@@ -401,7 +406,7 @@ async function dragUp(e){const d=DRAG;if(!d||d.id!==e.pointerId||d.done)return;i
   if(DRAG!==d){c.remove();return}dragReset();
   if(g!=null){S.sel=g;SFX.play('sel')}lastHtml='';render()}
 addEventListener('pointerup',dragUp);addEventListener('pointercancel',dragUp);
-document.body.addEventListener('lostpointercapture',e=>{if(DRAG&&DRAG.on&&!DRAG.done&&DRAG.id===e.pointerId)dragUp({type:'pointercancel',pointerId:e.pointerId})});
+document.body.addEventListener('lostpointercapture',e=>{if(e.target===document.body&&DRAG&&DRAG.on&&!DRAG.done&&DRAG.id===e.pointerId)dragUp({type:'pointercancel',pointerId:e.pointerId})});
 addEventListener('blur',()=>{if(DRAG&&!DRAG.done){dragReset();lastHtml='';render()}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&DRAG&&!DRAG.done){dragReset();lastHtml='';render()}});
 
