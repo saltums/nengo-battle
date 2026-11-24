@@ -91,6 +91,26 @@ input::placeholder{color:var(--ph)}
 .ghost-card{position:fixed!important;z-index:50;margin:0;pointer-events:none;max-height:none!important;box-shadow:0 8px 20px rgba(27,34,51,.18);border:2px solid var(--acc)!important;background:var(--panel)!important}
 .ghost-card.ng{border-color:var(--ng)!important;background:linear-gradient(var(--ngd),var(--ngd)),var(--panel)!important}
 .spark{position:fixed;z-index:51;width:9px;height:3px;border-radius:2px;pointer-events:none}
+.tl.thin{gap:0}
+.tl.thin .tr{margin:1px 0;padding-right:34px}
+#app.compact{gap:6px}
+#app.compact .race div{padding:3px 10px}
+#app.compact .panel{height:106px;padding:8px 12px;gap:3px}
+#app.compact .panel .txt{font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#app.compact .panel .ttl{font-size:17px}
+#app.compact .panel .ttl.v{font-size:19px}
+#app.compact .dir{font-size:12px;line-height:1}
+#app.compact .hand{height:62px}
+#app.compact .tl{gap:2px}
+.tl.thin .tr.pre{flex:1 1 0;padding-right:12px}
+.slot.thin{flex:none;height:0;max-height:none;border:none;background:none;padding:0;overflow:visible;position:relative;z-index:1}
+.slot.thin::before{content:"";position:absolute;left:0;right:0;top:-1px;border-top:2px dashed var(--acc)}
+.slot.thin::after{content:"";position:absolute;left:0;right:0;top:-11px;bottom:-11px}
+.slot.thin i{position:absolute;right:5px;top:0;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:var(--acc);color:var(--onacc);font-style:normal;font-size:15px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1}
+.panel .goro{font-size:14px;line-height:1.5;color:var(--ink)}
+.panel .goro b{font-size:11px;font-weight:700;color:var(--acc);border:1px solid var(--acc);border-radius:99px;padding:0 7px;margin-right:6px;vertical-align:1px}
+.panel .goro em{font-style:normal;font-weight:700;color:var(--acc);font-family:"JetBrains Mono",monospace}
+.panel.rv{height:auto;min-height:128px}
 .foot{flex:none;display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
 .hand{flex:none;display:grid;gap:6px;height:84px;transition:opacity .2s}
 .hc{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:4px;font-size:clamp(11px,3.4vw,13.5px);font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;overflow:hidden;color:var(--ink);word-break:auto-phrase;text-wrap:balance;line-break:strict}
@@ -133,7 +153,7 @@ input::placeholder{color:var(--ph)}
 <script>
 "use strict";
 /* ========== 設定（ルールの数字はここで変えられます） ========== */
-const RULE={hand:4,lineMax:15,winsNeeded:2,turnSec:30,betSec:30,roundGapSec:4,voidSec:60,startGems:10};
+const RULE={hand:4,lineMax:15,winsNeeded:2,turnSec:30,betSec:30,roundGapSec:4,voidSec:60,startGems:10,thinAt:5,compactAt:10};
 
 /* ========== 小道具 ========== */
 const $=s=>document.querySelector(s), app=$('#app');
@@ -146,7 +166,7 @@ const clone=v=>v==null?null:JSON.parse(JSON.stringify(v));
 /* ========== カード ========== */
 const CARDS={};let IDS=[];
 function parseCSV(t){const rows=[];let row=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}else if(c==='"')q=true;else if(c===','){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x!==''))rows.push(row);row=[]}else f+=c}row.push(f);if(row.some(x=>x!==''))rows.push(row);return rows}
-function loadCards(){parseCSV(window.CARDS_CSV||'').slice(1).forEach(r=>{const id='c'+r[0].trim(),year=parseInt(r[3],10);if(!r[1]||isNaN(year))return;CARDS[id]={id,title:r[1].trim(),text:(r[2]||'').trim(),year,scope:(r[4]||'').trim()}});IDS=Object.keys(CARDS)}
+function loadCards(){parseCSV(window.CARDS_CSV||'').slice(1).forEach(r=>{const id='c'+r[0].trim(),year=parseInt(r[3],10);if(!r[1]||isNaN(year))return;CARDS[id]={id,title:r[1].trim(),text:(r[2]||'').trim(),year,scope:(r[4]||'').trim(),goro:(r[5]||'').trim()}});IDS=Object.keys(CARDS)}
 
 /* ========== 通信（デモ用：同じブラウザのタブ同士） ========== */
 function makeLocal(){
@@ -376,13 +396,13 @@ function homeErr(t){const e=$('#herr');if(e)e.textContent=t}
 
 /* ========== 画面 ========== */
 function render(){
-  let h,wide=false;
+  let h,wide=false;S.compact=false;
   if(!S.role)h=vHome();
   else if(S.role==='teacher'){h=vTeacher();wide=true}
   else if(!me())h=`<div class="home"><div class="sub center">読みこみ中…</div></div>`;
   else if(S.assign){const m=S.match;h=!m?vWaitMatch():m.phase==='bet'?vBet(m):(m.phase==='done'||m.phase==='void')?vResult(m):vPlay(m)}
   else h=vLobby();
-  app.className=wide?'wide':'';
+  app.className=(wide?'wide':'')+(S.compact?' compact':'');
   if(!S.role&&($('#code')||$('#gems'))&&!S.homeErr&&!S.homeDirty)return;S.homeDirty=false;
   if(h===lastHtml&&app.innerHTML){lastKey=uiKey();return tickDom()}
   animCleanup();app.innerHTML=h;lastHtml=h;lastKey=uiKey();S.homeErr='';tickDom();
@@ -420,18 +440,20 @@ function vPlay(m){const u=S.uid,o=other(m,u),on=m.phase==='play',mine=m.turn===u
   if(m.phase==='roundEnd'){const w=m.rw;panel=`<div class="panel ${w==='draw'?'':w===u?'ok':'ng'}"><div class="ttl">${m.round}本目は${w==='draw'?'引き分け':w===u?'あなたの勝ち！':oppN+'の勝ち'}</div><div class="txt">先に2本とった方が勝ち（いま あなた ${m.wins[u]}本・${oppN} ${m.wins[o]}本）</div><div class="who" id="rg"></div></div>`}
   else if(fb){const l=m.last,who=l.u===u?'あなた':oppN;
     if(l.to)panel=`<div class="panel ng"><div class="ttl v"><span>${who}：時間切れ</span><small>手札が1枚ふえた</small></div></div>`;
-    else{const c=CARDS[l.c];panel=`<div class="panel ${l.ok?'ok':'ng'}"><div class="ttl v"><span>${who}：${l.ok?'正解！':'ざんねん…'}</span>${l.ok?'':'<small>手札が1枚ふえた</small>'}</div><div class="ans"><span class="yr mono">${c.year}年</span>${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>`}}
+    else{const c=CARDS[l.c];panel=`<div class="panel ${l.ok?'ok':'ng'}"><div class="ttl v"><span>${who}：${l.ok?'正解！':'ざんねん…'}</span>${l.ok?'':'<small>手札が1枚ふえた</small>'}</div><div class="ans"><span class="yr mono">${c.year}年</span>${esc(c.title)}</div>${goro(c)||`<div class="txt">${esc(c.text)}</div>`}</div>`}}
   else if(m.pick){const c=CARDS[m.pick];panel=mine?`<div class="panel ask"><div class="who">年の古い順にならべよう</div><div class="ttl">「${esc(c.title)}」はどこに入る？</div><div class="txt">${esc(c.text)}</div></div>`:`<div class="panel"><div class="who">${oppN}が出すカード。どこに入るか考えてみよう</div><div class="ttl">${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>`}
   else panel=`<div class="panel ${mine?'ask':''}"><div class="ttl center">${mine?'あなたの番<br>出すカードを1枚えらぼう':oppN+'が考え中…'}</div></div>`;
-  const canPick=mine&&!lock,placing=canPick&&!!m.pick,L=m.line;let tl='';
-  const slot=g=>!placing?'':S.sel===g?`<button class="tr pre" data-act="confirmgap">ここに置く（もう一度タップで決定）</button>`:`<button class="slot" data-act="gap" data-g="${g}">＋ ここ？</button>`;
+  const canPick=mine&&!lock,placing=canPick&&!!m.pick,L=m.line;let tl='';S.compact=L.length>=RULE.compactAt;
+  const thin=placing&&L.length>=RULE.thinAt;
+  const slot=g=>!placing?'':S.sel===g?`<button class="tr pre" data-act="confirmgap">ここに置く（もう一度タップで決定）</button>`:thin?`<button class="slot thin" data-act="gap" data-g="${g}" aria-label="ここに置く"><i>＋</i></button>`:`<button class="slot" data-act="gap" data-g="${g}">＋ ここ？</button>`;
   L.forEach((id,i)=>{const c=CARDS[id],cls=m.last&&m.last.c===id?(m.last.ok?'ok':'ng'):'';tl+=slot(i)+`<div class="tr ${cls}" data-k="${id}" ${placing?`data-act="rowgap" data-i="${i}"`:''}><span class="y mono">${c.year}</span><span class="t">${esc(c.title)}</span></div>`});tl+=slot(L.length);
   const cols=Math.max(3,hand.length);
   return `<div class="race"><div class="${mine?'act':''}"><span>あなた<em>${m.wins[u]}本</em></span><b>あと${hand.length}枚</b></div><div class="${on&&!mine?'act':''}"><span>${oppN}<em>${m.wins[o]}本</em></span><b>あと${m.hands[o].length}枚</b></div></div>
   <div class="goal"><span>${m.firstOut&&on?'相手は出し切った。これが最後の1手':'先に0枚で1本・2本とったら勝ち'}</span><span class="mono timer" id="tt"></span></div>
-  ${panel}<div class="dir">▲ むかし<small>年が古い</small></div><div class="tl ${canPick&&!m.pick?'dim':''}">${tl}</div><div class="dir">▼ さいきん<small>年が新しい</small></div>
+  ${panel}<div class="dir">▲ むかし<small>年が古い</small></div><div class="tl ${canPick&&!m.pick?'dim':''} ${thin?'thin':''}">${tl}</div><div class="dir">▼ さいきん<small>年が新しい</small></div>
   <div class="foot"><span>自分の手札${mine&&m.pick?'（タップで選び直せます）':''}</span><span class="gem">💎 ${m.bet[u]} vs ${m.bet[o]}</span></div>
   <div class="hand ${canPick?'':'dim'}" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${hand.map(id=>`<button class="hc ${CARDS[id].title.length>10?'l':CARDS[id].title.length>7?'m':''} ${m.pick===id&&mine?'on':canPick&&!m.pick?'can':''}" data-k="${id}" ${canPick?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`}
+function goro(c){return c.goro?`<div class="goro"><b>覚え方</b>${esc(c.goro).replace(/（(\d+)）/g,'（<em>$1</em>）')}</div>`:''}
 function revAgain(r,id){if(r.re[id]==null){r.re[id]=r.i;r.q.push(id)}}
 function missList(m){return Object.keys(m.miss[S.uid]).map(id=>CARDS[id]).sort((a,b)=>a.year-b.year||(a.id<b.id?-1:1))}
 function vResult(m){const u=S.uid,o=other(m,u),p=me()||{},v=m.phase==='void',win=m.winner===u,miss=missList(m),done=p.ls===S.mid;
@@ -440,7 +462,7 @@ function vResult(m){const u=S.uid,o=other(m,u),p=me()||{},v=m.phase==='void',win
   ${v?'<div class="sub">ジェムはそのまま</div>':`<div class="gem" style="font-size:20px;text-align:right">💎 ${win?'+'+m.bet[o]:'−'+m.bet[u]}<div class="sub">${done?'いま '+(p.g||0)+'個':''}</div></div>`}</div>`;
   if(reviewing){const c=CARDS[r.q[r.i]],again=r.re[c.id]===r.i;
     return `${head}<div class="label">復習：まちがえたカードをもう一度（${r.i+1}/${r.q.length}）</div>
-    <div class="panel ${r.shown?(r.ok?'ok':'ng'):'ask'}"><div class="who">${r.shown?(r.ok?'正解！':'正しくは '+c.year+'年'+(r.inp?'（あなたの答え：'+esc(r.inp)+'年）':'')+(again?'　あとでもう一度出ます':'')):'これは何年のできごと？'}</div><div class="ttl">${r.shown?`<span class="yr mono">${c.year}年</span>`:''}${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>
+    <div class="panel rv ${r.shown?(r.ok?'ok':'ng'):'ask'}"><div class="who">${r.shown?(r.ok?'正解！':'正しくは '+c.year+'年'+(r.inp?'（あなたの答え：'+esc(r.inp)+'年）':'')+(again?'　あとでもう一度出ます':'')):'これは何年のできごと？'}</div><div class="ttl">${r.shown?`<span class="yr mono">${c.year}年</span>`:''}${esc(c.title)}</div><div class="txt">${esc(c.text)}</div>${r.shown?goro(c):''}</div>
     ${r.shown?`<div class="grow"></div><button class="btn" data-act="revnext">${r.i+1<r.q.length?'次のカードへ':'おわり'}</button>`:
     `<div class="yin mono">${r.inp?esc(r.inp)+'<i>年</i>':'<span class="ph">年号を数字で入れよう</span>'}</div><div class="grow"></div>
     <div class="keys">${[1,2,3,4,5,6,7,8,9].map(k=>`<button data-act="key" data-k="${k}">${k}</button>`).join('')}<button data-act="key" data-k="del">⌫</button><button data-act="key" data-k="0">0</button><button class="go" data-act="key" data-k="go" ${r.inp.length>=3?'':'disabled'}>答える</button></div>
