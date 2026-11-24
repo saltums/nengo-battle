@@ -77,7 +77,7 @@ input::placeholder{color:var(--ph)}
 .panel .ttl.v small{font-size:12px;font-weight:700;white-space:nowrap}
 .panel.ok .ttl.v{color:var(--ok)}
 .panel.ng .ttl.v{color:var(--ng)}
-.panel .ans{font-size:15px;font-weight:700}
+.panel .ans{font-size:18px;font-weight:900}
 .panel .ans .yr{color:var(--acc);margin-right:6px}
 .tl{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:4px;transition:opacity .2s}
 .tl.dim,.hand.dim{opacity:.4}
@@ -123,9 +123,31 @@ input::placeholder{color:var(--ph)}
 .hc.can{border:2px solid var(--acc)}
 .hc.on{border:2px solid var(--acc);background:linear-gradient(var(--accd),var(--accd)),var(--panel);color:var(--acc);transform:translateY(-10px);box-shadow:0 10px 18px rgba(42,63,199,.28);z-index:60}
 .hc.on::before{background:#2a3fc7}
-.drag-ghost{position:fixed!important;z-index:70;pointer-events:none;margin:0;opacity:.95;transform:scale(.62) rotate(-3deg)!important;transform-origin:50% 100%;box-shadow:0 12px 24px rgba(27,34,51,.3)!important;left:0;top:0}
-.drag-line{position:fixed;z-index:69;height:0;border-top:3px solid var(--acc);pointer-events:none}
-.drag-line b{position:absolute;left:6px;top:-12px;background:var(--acc);color:var(--onacc);font-size:12px;font-weight:900;border-radius:99px;padding:0 10px;line-height:21px}
+.drag-card{position:fixed!important;z-index:70;pointer-events:none;margin:0;transform:rotate(-3deg) scale(1.04)!important;box-shadow:0 14px 28px rgba(27,34,51,.3)!important;border:2px solid var(--acc)!important}
+.tr.dph{border:2px dashed var(--acc);background:var(--accd)}
+.tl.dragging .slot,.tl.dragging .tr.pre{display:none}
+.tr.pre.dp{justify-content:space-between;font-weight:900}
+.tr.pre.dp .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr.pre.dp small{flex:none;font-size:12px;font-weight:700;opacity:.9}
+.judge{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.judge.ok{background:radial-gradient(circle at 50% 45%,rgba(15,157,99,.24),rgba(15,157,99,.07) 65%,rgba(15,157,99,0))}
+.judge.ng{background:radial-gradient(circle at 50% 45%,rgba(229,72,77,.22),rgba(229,72,77,.06) 65%,rgba(229,72,77,0))}
+.jbox{display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.94);border-radius:28px;padding:20px 36px 16px;box-shadow:0 20px 50px rgba(27,34,51,.25)}
+.jbox svg{width:112px;height:112px;fill:none;stroke-width:13;stroke-linecap:round}
+.judge.ok svg{stroke:var(--ok)}.judge.ng svg{stroke:var(--ng)}
+.jbox b{font-size:32px;font-weight:900;line-height:1.2}
+.judge.ok b{color:var(--ok)}.judge.ng b{color:var(--ng)}
+.jbox small{font-size:13px;color:var(--sub);font-weight:700}
+.panel .res{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;font-weight:700}
+.panel.ok .res{color:var(--ok)}.panel.ng .res{color:var(--ng)}
+.panel .res small{font-size:12px}
+.confirm{position:fixed;left:0;right:0;bottom:0;z-index:65;max-width:520px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-bottom:none;border-radius:18px 18px 0 0;box-shadow:0 -12px 30px rgba(27,34,51,.18);padding:12px 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;animation:sheet .2s ease-out}
+.confirm .q{font-size:16px;font-weight:900;text-align:center;line-height:1.4}
+.confirm .q span{color:var(--acc)}
+.confirm .cb{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.confirm .btn{padding:13px}
+@keyframes sheet{from{transform:translateY(100%)}}
+@media (prefers-reduced-motion: reduce){.confirm{animation:none}}
 /* result */
 .rescard{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .res{font-size:30px;font-weight:900}
@@ -259,7 +281,14 @@ function sparks(el,color,n){const r=el.getBoundingClientRect(),cx=r.left+r.width
   for(let i=0;i<n;i++){const a=(i/n)*Math.PI*2+.26,ex=Math.cos(a),ey=Math.sin(a),ang=a*180/Math.PI,d=14+(i%3)*5;
     const s=document.createElement('div');s.className='spark';s.style.left=(cx+ex*rx*(Math.abs(ex)>.5?1:.6))+'px';s.style.top=(cy+ey*ry)+'px';s.style.background=color;document.body.append(s);ANIM.els.add(s);
     s.animate([{transform:`translate(-50%,-50%) rotate(${ang}deg) translateX(0) scaleX(.4)`,opacity:1},{transform:`translate(-50%,-50%) rotate(${ang}deg) translateX(${d}px) scaleX(1)`,opacity:0}],{duration:480,easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'}).finished.then(()=>{s.remove();ANIM.els.delete(s)},()=>{})}}
-async function animPlace(snap,m){const l=m.last,fallback=()=>SFX.play(l.ok?'ok':'ng');
+// 正解・不正解を画面いっぱいに出す（さわる操作はじゃましない）
+function showJudge(ok,mine,dur){const d=document.createElement('div');d.className='judge '+(ok?'ok':'ng');
+  d.innerHTML=`<div class="jbox"><svg viewBox="0 0 120 120" aria-hidden="true">${ok?'<circle cx="60" cy="60" r="44" pathLength="1"/>':'<path d="M34 34 L86 86" pathLength="1"/><path d="M86 34 L34 86" pathLength="1"/>'}</svg><b>${ok?'正解！':'ざんねん…'}</b>${mine?'':'<small>相手の答え</small>'}</div>`;
+  document.body.append(d);const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!still){d.querySelectorAll('circle,path').forEach((p,i)=>{p.style.strokeDasharray='1';p.animate([{strokeDashoffset:1},{strokeDashoffset:0}],{duration:ok?320:180,delay:80+i*150,easing:'ease-out',fill:'backwards'})});
+    d.querySelector('.jbox').animate([{transform:'scale(.7)',opacity:0},{transform:'scale(1.04)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:260,easing:'ease-out'})}
+  d.animate([{opacity:0},{opacity:1,offset:.12},{opacity:1,offset:.75},{opacity:0}],{duration:dur,fill:'forwards'}).finished.then(()=>d.remove(),()=>d.remove())}
+async function animPlace(snap,m){const l=m.last,fallback=()=>{SFX.play(l.ok?'ok':'ng');showJudge(l.ok,l.u===S.uid,1100)};
   const tl=app.querySelector('.tl'),nr=tl&&tl.querySelector(`.tr[data-k="${l.c}"]`);
   if(!snap||!nr||!nr.animate||matchMedia('(prefers-reduced-motion: reduce)').matches)return fallback();
   const gen=ANIM.gen,alive=()=>gen===ANIM.gen,bounce=!l.ok&&l.g!=null;
@@ -282,7 +311,7 @@ async function animPlace(snap,m){const l=m.last,fallback=()=>SFX.play(l.ok?'ok':
     if(l.ok){
       // カチッとはまる
       nr.classList.add('ok');const okc=tok('--ok'),y=nr.querySelector('.y');
-      setTimeout(()=>{if(alive()){SFX.play('snap');sparks(nr,okc,12)}},150);
+      setTimeout(()=>{if(alive()){SFX.play('snap');sparks(nr,okc,12)}},150);showJudge(true,l.u===S.uid,1150);
       await Promise.all([
         nr.animate([{transform:'translateY(-14px) scale(1.18)'},{transform:'translateY(2px) scale(.93)',offset:.5},{transform:'translateY(-1px) scale(1.02)',offset:.78},{transform:'none'}],{duration:440,easing:'cubic-bezier(.3,.7,.3,1)'}).finished,
         nr.animate([{boxShadow:`0 0 0 0 ${okc}`},{boxShadow:'0 0 0 18px transparent'}],{duration:650,delay:140,easing:'ease-out'}).finished,
@@ -290,7 +319,7 @@ async function animPlace(snap,m){const l=m.last,fallback=()=>SFX.play(l.ok?'ok':
         y?y.animate([{transform:'none'},{transform:'scale(1.45)',offset:.4},{transform:'none'}],{duration:420,delay:140,easing:'ease-out'}).finished:null,
         nudge(nr.previousElementSibling,-7,300,140),nudge(nr.nextElementSibling,7,300,140)]);
       return}
-    nr.classList.add('ng');
+    nr.classList.add('ng');showJudge(false,l.u===S.uid,bounce?850:1100);
     if(!bounce){SFX.play('ng');return}
     // はじかれる：前後に押し返されて外へ出て、正しい場所に収まる
     SFX.play('bump');const ngc=tok('--ng');
@@ -322,26 +351,35 @@ addEventListener('resize',layoutHand);
 /* ========== 手札を年表へ引っぱって「置く場所を選ぶ」（RULE.drag のときだけ）
    引っぱるのは選ぶところまで。指を離しても置かれず、「ここに置く」をタップして決める ========== */
 let DRAG=null,dragEnd=0;
-function gapAt(y){const tl=app.querySelector('.tl');if(!tl)return null;const tr=tl.getBoundingClientRect();if(y<tr.top-24||y>tr.bottom+24)return null;
-  const rs=[...tl.querySelectorAll('.tr[data-k]')].map(e=>e.getBoundingClientRect());if(!rs.length)return{g:0,y:(tr.top+tr.bottom)/2,tr};
-  const b=[rs[0].top-2];for(let i=1;i<rs.length;i++)b.push((rs[i-1].bottom+rs[i].top)/2);b.push(rs[rs.length-1].bottom+2);
-  let g=0;b.forEach((v,i)=>{if(Math.abs(v-y)<Math.abs(b[g]-y))g=i});return{g,y:b[g],tr}}
-function dragStop(){if(!DRAG)return;if(DRAG.ghost)DRAG.ghost.remove();if(DRAG.line)DRAG.line.remove();DRAG=null}
+const tlRows=()=>[...app.querySelectorAll('.tl .tr[data-k]')];
+// カードの真ん中の高さ y が、年表のどのすき間に当たるか（開けたすき間の上にいる間は、そのまま）
+function dragGap(d,y){if(d.ph&&d.ph.isConnected){const r=d.ph.getBoundingClientRect();if(y>=r.top-3&&y<=r.bottom+3)return d.g}
+  const tl=app.querySelector('.tl');if(!tl)return null;const tr=tl.getBoundingClientRect();if(y<tr.top-30||y>tr.bottom+30)return null;
+  const rows=tlRows();for(let i=0;i<rows.length;i++){const r=rows[i].getBoundingClientRect();if(y<(r.top+r.bottom)/2)return i}return rows.length}
+// 年表にカード1枚ぶんのすき間を開ける（前後のカードがすっとずれる）
+function dragOpen(d,g){const tl=app.querySelector('.tl');if(!tl)return;tl.classList.add('dragging');
+  if(g===d.g&&d.ph&&d.ph.isConnected)return;const all=[...tl.children].filter(e=>e!==d.ph),before=new Map(all.map(e=>[e,e.getBoundingClientRect()]));
+  if(g==null){if(d.ph)d.ph.remove()}else{if(!d.ph){d.ph=document.createElement('div');d.ph.className='tr dph'}const ref=tlRows()[g];tl.insertBefore(d.ph,ref||null)}
+  if(g!==d.g&&g!=null)SFX.play('tap');d.g=g;flipFrom(all,e=>before.get(e),150)}
+function dragHideSrc(d){const src=app.querySelector(`.hand .hc[data-k="${d.c}"]`);if(src)src.style.visibility='hidden';return src}
 app.addEventListener('pointerdown',e=>{if(!RULE.drag||DRAG)return;const b=e.target.closest('.hc[data-act="pick"]');if(!b)return;
   DRAG={id:e.pointerId,x0:e.clientX,y0:e.clientY,c:b.dataset.k,on:false,g:null}});
-addEventListener('pointermove',e=>{const d=DRAG;if(!d||d.id!==e.pointerId)return;
-  if(!d.on){const dx=e.clientX-d.x0,dy=e.clientY-d.y0;if(Math.hypot(dx,dy)<10)return;if(dy>0||Math.abs(dy)<Math.abs(dx)*.8)return dragStop();
-    const src=app.querySelector(`.hand .hc[data-k="${d.c}"]`);if(!src)return dragStop();
-    d.on=true;const r=src.getBoundingClientRect();d.w=r.width;d.h=r.height;
-    d.ghost=src.cloneNode(true);d.ghost.classList.remove('on','can');d.ghost.classList.add('drag-ghost');d.ghost.removeAttribute('data-act');Object.assign(d.ghost.style,{width:r.width+'px',height:r.height+'px'});document.body.append(d.ghost);
-    d.line=document.createElement('div');d.line.className='drag-line';d.line.innerHTML='<b>ここ？</b>';d.line.hidden=true;document.body.append(d.line);
+addEventListener('pointermove',e=>{const d=DRAG;if(!d||d.id!==e.pointerId||d.done)return;
+  if(!d.on){const dx=e.clientX-d.x0,dy=e.clientY-d.y0;if(Math.hypot(dx,dy)<10)return;if(dy>0||Math.abs(dy)<Math.abs(dx)*.8){DRAG=null;return}
+    const src=app.querySelector(`.hand .hc[data-k="${d.c}"]`);if(!src){DRAG=null;return}
+    d.on=true;const r=src.getBoundingClientRect();d.w=r.width;d.h=r.height;d.from=r;
+    d.card=src.cloneNode(true);d.card.classList.remove('on','can');d.card.classList.add('drag-card');d.card.removeAttribute('data-act');
+    Object.assign(d.card.style,{width:r.width+'px',height:r.height+'px',left:r.left+'px',top:r.top+'px',visibility:''});document.body.append(d.card);
     if(!S.match||S.match.pick!==d.c){SFX.play('pick');pickCard(d.c)}}
-  e.preventDefault();
-  const py=e.clientY-48;d.ghost.style.left=(e.clientX-d.w/2)+'px';d.ghost.style.top=(py-8-d.h)+'px';
-  const gp=gapAt(py);d.g=gp?gp.g:null;d.line.hidden=!gp;
-  if(gp){Object.assign(d.line.style,{left:gp.tr.left+'px',width:gp.tr.width+'px',top:gp.y+'px'});if(d.lastG!==gp.g){d.lastG=gp.g;SFX.play('tap')}}},{passive:false});
-function dragUp(e){const d=DRAG;if(!d||d.id!==e.pointerId)return;const was=d.on,g=d.g;dragStop();if(!was)return;dragEnd=Date.now();
-  if(g!=null&&e.type==='pointerup'){S.sel=g;SFX.play('sel')}render()}
+  e.preventDefault();dragHideSrc(d);
+  const top=e.clientY-d.h-12;d.card.style.left=(e.clientX-d.w/2)+'px';d.card.style.top=top+'px';
+  dragOpen(d,dragGap(d,top+d.h/2))},{passive:false});
+async function dragUp(e){const d=DRAG;if(!d||d.id!==e.pointerId||d.done)return;if(!d.on){DRAG=null;return}d.done=true;dragEnd=Date.now();
+  const g=e.type==='pointerup'?d.g:null,c=d.card,from=c.getBoundingClientRect();
+  const to=g!=null&&d.ph&&d.ph.isConnected?d.ph.getBoundingClientRect():(dragHideSrc(d)||{getBoundingClientRect:()=>d.from}).getBoundingClientRect();
+  try{await c.animate([{left:from.left+'px',top:from.top+'px',width:from.width+'px',height:from.height+'px'},{left:to.left+'px',top:to.top+'px',width:to.width+'px',height:to.height+'px'}],{duration:220,easing:EZ,fill:'forwards'}).finished}catch(err){}
+  c.remove();if(d.ph)d.ph.remove();DRAG=null;
+  if(g!=null){S.sel=g;SFX.play('sel')}lastHtml='';render()}
 addEventListener('pointerup',dragUp);addEventListener('pointercancel',dragUp);
 
 /* ========== 対戦のルール（データの書きかえ） ========== */
@@ -478,19 +516,19 @@ function vPlay(m){const u=S.uid,o=other(m,u),on=m.phase==='play',mine=m.turn===u
   if(m.phase==='roundEnd'){const w=m.rw;panel=`<div class="panel ${w==='draw'?'':w===u?'ok':'ng'}"><div class="ttl">${m.round}本目は${w==='draw'?'引き分け':w===u?'あなたの勝ち！':oppN+'の勝ち'}</div><div class="txt">先に2本とった方が勝ち（いま あなた ${m.wins[u]}本・${oppN} ${m.wins[o]}本）</div><div class="who" id="rg"></div></div>`}
   else if(fb){const l=m.last,who=l.u===u?'あなた':oppN;
     if(l.to)panel=`<div class="panel ng"><div class="ttl v"><span>${who}：時間切れ</span><small>手札が1枚ふえた</small></div></div>`;
-    else{const c=CARDS[l.c];panel=`<div class="panel ${l.ok?'ok':'ng'}"><div class="ttl v"><span>${who}：${l.ok?'正解！':'ざんねん…'}</span>${l.ok?'':'<small>手札が1枚ふえた</small>'}</div><div class="ans"><span class="yr mono">${c.year}年</span>${esc(c.title)}</div>${goro(c)||`<div class="txt">${esc(c.text)}</div>`}</div>`}}
+    else{const c=CARDS[l.c];panel=`<div class="panel ${l.ok?'ok':'ng'}"><div class="res"><span>${who}の答え：${l.ok?'正解':'不正解'}</span>${l.ok?'':'<small>手札が1枚ふえた</small>'}</div><div class="ans"><span class="yr mono">${c.year}年</span>${esc(c.title)}</div>${goro(c)||`<div class="txt">${esc(c.text)}</div>`}</div>`}}
   else if(m.pick){const c=CARDS[m.pick];panel=mine?`<div class="panel ask"><div class="who">年の古い順にならべよう</div><div class="ttl">「${esc(c.title)}」はどこに入る？</div><div class="txt">${esc(c.text)}</div></div>`:`<div class="panel"><div class="who">${oppN}が出すカード。どこに入るか考えてみよう</div><div class="ttl">${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>`}
   else panel=`<div class="panel ${mine?'ask':''}"><div class="ttl center">${mine?'あなたの番<br>出すカードを1枚えらぼう':oppN+'が考え中…'}</div></div>`;
   const canPick=mine&&!lock,placing=canPick&&!!m.pick,L=m.line;let tl='';S.compact=L.length>=RULE.compactAt;
   const thin=placing&&L.length>=RULE.thinAt;
-  const slot=g=>!placing?'':S.sel===g?`<button class="tr pre" data-act="confirmgap">ここに置く（もう一度タップで決定）</button>`:thin?`<button class="slot thin" data-act="gap" data-g="${g}" aria-label="ここに置く"><i>＋</i></button>`:`<button class="slot" data-act="gap" data-g="${g}">＋ ここ？</button>`;
+  const slot=g=>!placing?'':S.sel===g?(RULE.drag?`<button class="tr pre dp" data-act="confirmgap"><span class="t">${esc(CARDS[m.pick].title)}</span><small>ここに置く？</small></button>`:`<button class="tr pre" data-act="confirmgap">ここに置く（もう一度タップで決定）</button>`):thin?`<button class="slot thin" data-act="gap" data-g="${g}" aria-label="ここに置く"><i>＋</i></button>`:`<button class="slot" data-act="gap" data-g="${g}">＋ ここ？</button>`;
   L.forEach((id,i)=>{const c=CARDS[id],cls=m.last&&m.last.c===id?(m.last.ok?'ok':'ng'):'';tl+=slot(i)+`<div class="tr ${cls}" data-k="${id}" ${placing?`data-act="rowgap" data-i="${i}"`:''}><span class="y mono">${c.year}</span><span class="t">${esc(c.title)}</span></div>`});tl+=slot(L.length);
   const cols=Math.max(3,hand.length);
   return `<div class="race"><div class="${mine?'act':''}"><span>あなた<em>${m.wins[u]}本</em></span><b>あと${hand.length}枚</b></div><div class="${on&&!mine?'act':''}"><span>${oppN}<em>${m.wins[o]}本</em></span><b>あと${m.hands[o].length}枚</b></div></div>
   <div class="goal"><span>${m.firstOut&&on?'相手は出し切った。これが最後の1手':'先に0枚で1本・2本とったら勝ち'}</span><span class="mono timer" id="tt"></span></div>
   ${panel}<div class="dir">▲ むかし<small>年が古い</small></div><div class="tl ${canPick&&!m.pick?'dim':''} ${thin?'thin':''}">${tl}</div><div class="dir">▼ さいきん<small>年が新しい</small></div>
   <div class="foot"><span>自分の手札${mine&&m.pick?'（タップで選び直せます）':RULE.drag&&canPick?'（年表へ引っぱっても選べます）':''}</span><span class="gem">💎 ${m.bet[u]} vs ${m.bet[o]}</span></div>
-  <div class="hand ${canPick?'':'dim'} ${hand.length>=6?'many':''}">${hand.map(id=>`<button class="hc ${CARDS[id].title.length>10?'l':CARDS[id].title.length>7?'m':''} ${m.pick===id&&mine?'on':canPick&&!m.pick?'can':''}" data-k="${id}" ${canPick?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`}
+  <div class="hand ${canPick?'':'dim'} ${hand.length>=6?'many':''}">${hand.map(id=>`<button class="hc ${CARDS[id].title.length>10?'l':CARDS[id].title.length>7?'m':''} ${m.pick===id&&mine?'on':canPick&&!m.pick?'can':''}" data-k="${id}" ${canPick?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`+(RULE.drag&&placing&&S.sel!=null?`<div class="confirm"><div class="q">「<span>${esc(CARDS[m.pick].title)}</span>」をここに置く？</div><div class="cb"><button class="btn ghost" data-act="cancelgap">やめる</button><button class="btn" data-act="confirmgap">ここに置く</button></div></div>`:'')}
 function goro(c){return c.goro?`<div class="goro"><b>覚え方</b>${esc(c.goro).replace(/（(\d+)）/g,'（<em>$1</em>）')}</div>`:''}
 function revAgain(r,id){if(r.re[id]==null){r.re[id]=r.i;r.q.push(id)}}
 function missList(m){return Object.keys(m.miss[S.uid]).map(id=>CARDS[id]).sort((a,b)=>a.year-b.year||(a.id<b.id?-1:1))}
@@ -538,7 +576,7 @@ function tick(){
 }
 
 /* ========== 操作 ========== */
-app.addEventListener('click',e=>{if(Date.now()-dragEnd<400)return;const t=e.target.closest('[data-act]');if(!t||t.disabled)return;const a=t.dataset.act,m=S.match;
+app.addEventListener('click',e=>{if(Date.now()-dragEnd<300)return;const t=e.target.closest('[data-act]');if(!t||t.disabled)return;const a=t.dataset.act,m=S.match;
   if(a==='pick')SFX.play('pick');else if(a==='gap'||a==='rowgap')SFX.play('sel');else if(a!=='key'&&a!=='sfx'&&a!=='confirmgap')SFX.play('tap');
   if(a==='sfx'){SFX.toggle();S.homeDirty=true;render();return}
   if(a==='join')joinRoom().catch(()=>homeErr('通信できませんでした'));
@@ -549,6 +587,7 @@ app.addEventListener('click',e=>{if(Date.now()-dragEnd<400)return;const t=e.targ
   else if(a==='pick')pickCard(t.dataset.c);
   else if(a==='gap'){S.sel=Number(t.dataset.g);render()}
   else if(a==='rowgap'){const r=t.getBoundingClientRect(),i=Number(t.dataset.i);S.sel=(e.clientY-r.top<r.height/2)?i:i+1;render()}
+  else if(a==='cancelgap'){S.sel=null;render()}
   else if(a==='confirmgap'){if(S.sel!=null&&m.pick)place(S.sel)}
   else if(a==='key'){const r=S.rev,k=t.dataset.k;if(!r)return;if(k!=='go')SFX.play('tap');if(k==='del')r.inp=r.inp.slice(0,-1);else if(k==='go'){const c=CARDS[r.q[r.i]];r.ok=Number(r.inp)===c.year;if(r.ok)r.right++;else revAgain(r,c.id);r.shown=true;SFX.play(r.ok?'ok':'ng')}else if(r.inp.length<4)r.inp+=k;render()}
   else if(a==='revnext'){const r=S.rev;r.i++;r.inp='';r.shown=false;render()}
