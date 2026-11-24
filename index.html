@@ -88,6 +88,9 @@ input::placeholder{color:var(--ph)}
 .tr.ng{border:2px solid var(--ng);background:var(--ngd)}
 .tr.pre{flex:1.5 1 0;max-height:54px;border:2px solid var(--acc);background:var(--acc);color:var(--onacc);font-weight:900;justify-content:center}
 .slot{flex:1 1 0;min-height:0;max-height:44px;border:1.5px dashed var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:clamp(10px,3.6vw,14px);font-weight:700;color:var(--acc);background:var(--accd);overflow:hidden;line-height:1;font-family:inherit;width:100%}
+.ghost-card{position:fixed!important;z-index:50;margin:0;pointer-events:none;max-height:none!important;box-shadow:0 8px 20px rgba(27,34,51,.18);border:2px solid var(--acc)!important;background:var(--panel)!important}
+.ghost-card.ng{border-color:var(--ng)!important;background:linear-gradient(var(--ngd),var(--ngd)),var(--panel)!important}
+.spark{position:fixed;z-index:51;width:9px;height:3px;border-radius:2px;pointer-events:none}
 .foot{flex:none;display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
 .hand{flex:none;display:grid;gap:6px;height:84px;transition:opacity .2s}
 .hc{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:4px;font-size:clamp(11px,3.4vw,13.5px);font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;overflow:hidden;color:var(--ink);word-break:auto-phrase;text-wrap:balance;line-break:strict}
@@ -183,7 +186,7 @@ let DB;
 /* ========== 状態 ========== */
 const S={role:null,code:null,uid:null,name:'',meta:undefined,players:{},seen:{},assign:null,mid:null,match:null,rev:null,oppSeen:0,waiting:false,sel:null,closeArm:false,homeErr:''};
 const FB=4500,LOCK=2500;
-let unsubs=[],munsubs=[],busy={},lastBeat=0,lastQ=0,lastKey='',lastTurnStart=0;
+let unsubs=[],munsubs=[],busy={},lastBeat=0,lastQ=0,lastKey='',lastTurnStart=0,lastHtml='';
 const R=()=>'rooms/'+S.code;
 const me=()=>S.players[S.uid];
 const other=(m,u)=>m.ids[0]===u?m.ids[1]:m.ids[0];
@@ -197,16 +200,91 @@ const SFX=(()=>{let ctx=null,on=true;try{on=localStorage.getItem('nb-sfx')!=='0'
     ok:[[659,0,.12,'sine',.12],[880,.1,.12,'sine',.12],[1319,.2,.28,'sine',.12]],ng:[[311,0,.16,'triangle',.11],[233,.15,.3,'triangle',.11]],
     turn:[[880,0,.09,'sine',.09],[1175,.09,.18,'sine',.09]],match:[[523,0,.1,'sine',.1],[659,.1,.1,'sine',.1],[784,.2,.22,'sine',.1]],
     round:[[784,0,.12,'sine',.11],[988,.12,.26,'sine',.11]],win:[[523,0,.12,'sine',.12],[659,.12,.12,'sine',.12],[784,.24,.12,'sine',.12],[1047,.36,.45,'sine',.12]],
-    lose:[[392,0,.2,'sine',.1],[330,.2,.2,'sine',.1],[262,.4,.45,'sine',.1]]};
+    lose:[[392,0,.2,'sine',.1],[330,.2,.2,'sine',.1],[262,.4,.45,'sine',.1]],
+    snap:[[2600,0,.03,'square',.04],[1319,.03,.16,'sine',.12],[1976,.11,.26,'sine',.1]],bump:[[170,0,.18,'sine',.3],[440,0,.04,'triangle',.07],[110,.12,.16,'sine',.22]]};
   const tone=(f,t,d,type,v)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+d+.03)};
   return{get on(){return on},
     toggle(){on=!on;try{localStorage.setItem('nb-sfx',on?'1':'0')}catch(e){}if(on)this.play('pick');return on},
     play(n){if(!on||!SEQ[n])return;try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!ctx)ctx=new AC();if(ctx.state==='suspended')ctx.resume();const t=ctx.currentTime+.01;SEQ[n].forEach(a=>tone(a[0],t+a[1],a[2],a[3],a[4]))}catch(e){}}}})();
 function sfxMatch(pv,m){if(!m)return;const u=S.uid;if(!pv){if(m.phase==='bet')SFX.play('match');return}
-  if(m.last&&(!pv.last||pv.last.at!==m.last.at))SFX.play(m.last.ok?'ok':'ng');
-  if(m.phase==='play'&&m.turn===u&&(pv.turn!==u||pv.phase!=='play'))setTimeout(()=>SFX.play('turn'),m.last&&DB.now()-m.last.at<1500?900:0);
+  if(m.last&&m.last.to&&(!pv.last||pv.last.at!==m.last.at))SFX.play('ng');
+  if(m.phase==='play'&&m.turn===u&&(pv.turn!==u||pv.phase!=='play'))setTimeout(()=>SFX.play('turn'),m.last&&DB.now()-m.last.at<1500?(m.last.ok||m.last.to?1000:2300):0);
   if(m.phase==='roundEnd'&&pv.phase!=='roundEnd'&&m.rw===u)setTimeout(()=>SFX.play('round'),700);
   if(m.phase==='done'&&pv.phase!=='done')setTimeout(()=>SFX.play(m.winner===u?'win':'lose'),300)}
+
+/* ========== 置いたときの動き（はじかれる・カチッとはまる・手札から飛ぶ・年表が開く・手札が詰まる） ==========
+   置いた直後は LOCK（2.5秒）のあいだ次の操作ができないので、動きはその中に収まるようにしてある */
+const ANIM={gen:0,els:new Set()};
+const EZ='cubic-bezier(.2,.7,.2,1)',wait=ms=>new Promise(r=>setTimeout(r,ms));
+function animCleanup(){ANIM.gen++;ANIM.els.forEach(e=>e.remove());ANIM.els.clear()}
+function rectsOf(sel){const o={};app.querySelectorAll(sel).forEach(e=>{o[e.dataset.k]=e.getBoundingClientRect()});return o}
+function animSnap(m){const l=m.last;if(!app.querySelector('.tl'))return null;
+  const src=(l.u===S.uid&&app.querySelector(`.hand .hc[data-k="${l.c}"]`))||app.querySelector('.panel .ttl');
+  return{rows:rectsOf('.tl .tr[data-k]'),hand:rectsOf('.hand .hc[data-k]'),src:src?src.getBoundingClientRect():null}}
+function flipFrom(els,old,dur){return Promise.all(els.map(e=>{const a=old(e);if(!a)return;const b=e.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top;if(Math.abs(dx)<.5&&Math.abs(dy)<.5)return;
+  return e.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:dur,easing:EZ}).finished.catch(()=>{})}))}
+function nudge(el,px,dur,delay){return el?el.animate([{transform:'none'},{transform:`translateY(${px}px)`,offset:.45},{transform:'none'}],{duration:dur,delay:delay||0,easing:'ease-out'}).finished.catch(()=>{}):null}
+function ghost(from,r,cls){const f=from.cloneNode(true);f.classList.remove('ok','ng');f.classList.add('ghost-card');if(cls)f.classList.add(cls);
+  Object.assign(f.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',visibility:''});document.body.append(f);ANIM.els.add(f);return f}
+function tok(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function sparks(el,color,n){const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,rx=r.width/2,ry=r.height/2+2;
+  for(let i=0;i<n;i++){const a=(i/n)*Math.PI*2+.26,ex=Math.cos(a),ey=Math.sin(a),ang=a*180/Math.PI,d=14+(i%3)*5;
+    const s=document.createElement('div');s.className='spark';s.style.left=(cx+ex*rx*(Math.abs(ex)>.5?1:.6))+'px';s.style.top=(cy+ey*ry)+'px';s.style.background=color;document.body.append(s);ANIM.els.add(s);
+    s.animate([{transform:`translate(-50%,-50%) rotate(${ang}deg) translateX(0) scaleX(.4)`,opacity:1},{transform:`translate(-50%,-50%) rotate(${ang}deg) translateX(${d}px) scaleX(1)`,opacity:0}],{duration:480,easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'}).finished.then(()=>{s.remove();ANIM.els.delete(s)},()=>{})}}
+async function animPlace(snap,m){const l=m.last,fallback=()=>SFX.play(l.ok?'ok':'ng');
+  const tl=app.querySelector('.tl'),nr=tl&&tl.querySelector(`.tr[data-k="${l.c}"]`);
+  if(!snap||!nr||!nr.animate||matchMedia('(prefers-reduced-motion: reduce)').matches)return fallback();
+  const gen=ANIM.gen,alive=()=>gen===ANIM.gen,bounce=!l.ok&&l.g!=null;
+  try{
+    nr.classList.remove('ok','ng');
+    const home=nr.nextElementSibling;
+    if(bounce){const after=m.line.filter(x=>x!==l.c)[l.g];tl.insertBefore(nr,after?tl.querySelector(`.tr[data-k="${after}"]`):null)}
+    const rows=[...tl.querySelectorAll('.tr[data-k]')].filter(r=>r!==nr);
+    const hb=[...app.querySelectorAll('.hand .hc[data-k]')],hasHand=Object.keys(snap.hand).length>0;
+    const drawn=hasHand&&l.u===S.uid?hb.filter(b=>!snap.hand[b.dataset.k]):[];
+    drawn.forEach(b=>b.style.visibility='hidden');
+    const panel=app.querySelector('.panel');if(panel)panel.animate([{opacity:0},{opacity:1}],{duration:200,delay:400,fill:'backwards'});
+    // 年表が開く・手札から飛ぶ・手札が詰まる
+    nr.style.visibility='hidden';const dst=nr.getBoundingClientRect();
+    const moves=[flipFrom(rows,e=>snap.rows[e.dataset.k],320),flipFrom(hb.filter(b=>snap.hand[b.dataset.k]),e=>snap.hand[e.dataset.k],260)];
+    if(snap.src){const s=snap.src,f=ghost(nr,s);
+      moves.push(f.animate([{left:s.left+'px',top:s.top+'px',width:s.width+'px',height:s.height+'px'},{left:dst.left+'px',top:dst.top+'px',width:dst.width+'px',height:dst.height+'px'}],{duration:400,easing:EZ,fill:'forwards'}).finished.then(()=>{f.remove();ANIM.els.delete(f)}))}
+    await Promise.all(moves);if(!alive())return;
+    nr.style.visibility='';
+    if(l.ok){
+      // カチッとはまる
+      nr.classList.add('ok');const okc=tok('--ok'),y=nr.querySelector('.y');
+      setTimeout(()=>{if(alive()){SFX.play('snap');sparks(nr,okc,12)}},150);
+      await Promise.all([
+        nr.animate([{transform:'translateY(-14px) scale(1.18)'},{transform:'translateY(2px) scale(.93)',offset:.5},{transform:'translateY(-1px) scale(1.02)',offset:.78},{transform:'none'}],{duration:440,easing:'cubic-bezier(.3,.7,.3,1)'}).finished,
+        nr.animate([{boxShadow:`0 0 0 0 ${okc}`},{boxShadow:'0 0 0 18px transparent'}],{duration:650,delay:140,easing:'ease-out'}).finished,
+        nr.animate([{backgroundColor:okc},{backgroundColor:'transparent'}],{duration:500,delay:140,easing:'ease-out'}).finished,
+        y?y.animate([{transform:'none'},{transform:'scale(1.45)',offset:.4},{transform:'none'}],{duration:420,delay:140,easing:'ease-out'}).finished:null,
+        nudge(nr.previousElementSibling,-7,300,140),nudge(nr.nextElementSibling,7,300,140)]);
+      return}
+    nr.classList.add('ng');
+    if(!bounce){SFX.play('ng');return}
+    // はじかれる：前後に押し返されて外へ出て、正しい場所に収まる
+    SFX.play('bump');const ngc=tok('--ng');
+    await Promise.all([
+      nr.animate([{transform:'none'},{transform:'scale(.9,.72)',offset:.5},{transform:'none'}],{duration:260,easing:'ease-out'}).finished,
+      nr.animate([{boxShadow:`0 0 0 0 ${ngc}`},{boxShadow:'0 0 0 14px transparent'}],{duration:420,easing:'ease-out'}).finished,
+      nudge(nr.previousElementSibling,8,260),nudge(nr.nextElementSibling,-8,260)]);
+    if(!alive())return;
+    const a=nr.getBoundingClientRect(),f=ghost(nr,a,'ng'),out='translate(20px,-36px) rotate(-10deg) scale(.9)';
+    const b1=new Map(rows.map(r=>[r,r.getBoundingClientRect()]));nr.remove();
+    await Promise.all([flipFrom(rows,e=>b1.get(e),300),f.animate([{transform:'none'},{transform:out}],{duration:340,easing:'cubic-bezier(.2,1.5,.45,1)',fill:'forwards'}).finished]);
+    await wait(320);if(!alive())return;
+    const b2=new Map(rows.map(r=>[r,r.getBoundingClientRect()]));
+    nr.style.visibility='hidden';tl.insertBefore(nr,home&&home.parentNode===tl?home:null);
+    const d=nr.getBoundingClientRect();
+    await Promise.all([flipFrom(rows,e=>b2.get(e),380),f.animate([{transform:out},{transform:`translate(${d.left-a.left}px,${d.top-a.top}px)`}],{duration:520,easing:'cubic-bezier(.45,0,.2,1)',fill:'forwards'}).finished]);
+    if(!alive())return;
+    f.remove();ANIM.els.delete(f);nr.style.visibility='';
+    // 1枚引く
+    drawn.forEach(b=>{b.style.visibility='';b.animate([{transform:'translateY(-16px)',opacity:0},{transform:'none',opacity:1}],{duration:320,easing:EZ})});
+  }catch(e){console.error('anim',e);if(alive()){lastHtml='';render()}}
+}
 
 /* ========== 対戦のルール（データの書きかえ） ========== */
 function pass(m,mover){m.turn=other(m,mover);m.turnStart=DB.now();m.pick=null;m.pickAt=null}
@@ -238,7 +316,7 @@ function place(g){const c=S.match.pick,u=S.uid;once('place',()=>txMatch(m=>{
   const y=CARDS[c].year,L=m.line,ok=(g===0||CARDS[L[g-1]].year<=y)&&(g>=L.length||y<=CARDS[L[g]].year);
   let pos=g;if(!ok){pos=L.findIndex(x=>CARDS[x].year>y);if(pos<0)pos=L.length}L.splice(pos,0,c);
   if(!ok){if(m.deck.length)h.push(m.deck.pop());m.miss[u][c]=true}
-  m.last={u,c,ok,at:DB.now()};resolve(m,u);return m}));S.sel=null}
+  m.last={u,c,ok,g,at:DB.now()};resolve(m,u);return m}));S.sel=null}
 function timeoutTurn(T,ts){once('to',()=>txMatch(m=>{if(m.phase!=='play'||m.turn!==T||m.turnStart!==ts)return undefined;if(m.deck.length)m.hands[T].push(m.deck.pop());m.last={u:T,to:true,at:DB.now()};resolve(m,T);return m}))}
 function nextRound(){once('next',()=>txMatch(m=>{if(m.phase!=='roundEnd')return undefined;const w=m.ids.find(u=>m.wins[u]>=RULE.winsNeeded);if(w){m.phase='done';m.winner=w}else deal(m);return m}))}
 function voidMatch(){once('void',()=>txMatch(m=>{if(m.phase==='done'||m.phase==='void')return undefined;m.phase='void';return m}))}
@@ -276,7 +354,7 @@ function onAssign(a){
   if(a.mid===S.mid)return;
   munsubs.forEach(f=>f());munsubs=[];S.mid=a.mid;S.match=null;S.rev=null;S.betNote=false;S.waiting=false;S.sel=null;S.oppSeen=DB.now();
   DB.update(R()+'/players/'+S.uid,{st:'play'});
-  munsubs.push(DB.on(mpath(),m=>{const pv=S.match;S.match=m?norm(m):null;sfxMatch(pv,S.match);if(pv&&S.match&&S.match.phase==='bet'&&pv.ok[S.uid]&&!S.match.ok[S.uid]&&pv.bet[S.uid]===S.match.bet[S.uid])S.betNote=true;if(S.match){if(S.match.turnStart!==lastTurnStart){lastTurnStart=S.match.turnStart;S.sel=null}if(S.match.phase==='done'||S.match.phase==='void')settle()}render()}));
+  munsubs.push(DB.on(mpath(),m=>{const pv=S.match;S.match=m?norm(m):null;const nl=pv&&S.match&&S.match.last&&!S.match.last.to&&(!pv.last||pv.last.at!==S.match.last.at),snap=nl?animSnap(S.match):null;sfxMatch(pv,S.match);if(pv&&S.match&&S.match.phase==='bet'&&pv.ok[S.uid]&&!S.match.ok[S.uid]&&pv.bet[S.uid]===S.match.bet[S.uid])S.betNote=true;if(S.match){if(S.match.turnStart!==lastTurnStart){lastTurnStart=S.match.turnStart;S.sel=null}if(S.match.phase==='done'||S.match.phase==='void')settle()}render();if(nl)animPlace(snap,S.match)}));
   munsubs.push(DB.on(R()+'/seen/'+a.opp,v=>{if(v)S.oppSeen=v}));
   render();
 }
@@ -306,7 +384,8 @@ function render(){
   else h=vLobby();
   app.className=wide?'wide':'';
   if(!S.role&&($('#code')||$('#gems'))&&!S.homeErr&&!S.homeDirty)return;S.homeDirty=false;
-  app.innerHTML=h;lastKey=uiKey();S.homeErr='';tickDom();
+  if(h===lastHtml&&app.innerHTML){lastKey=uiKey();return tickDom()}
+  animCleanup();app.innerHTML=h;lastHtml=h;lastKey=uiKey();S.homeErr='';tickDom();
 }
 function vHome(){const pre=new URLSearchParams(location.search).get('room')||'';
   const title=`<h1><small>歴史カード対戦</small>年号ならべ<br>バトル<span style="font-size:.45em;color:var(--sub)">（仮）</span></h1>`,demo=DB.demo?'<div class="demo">デモモード：この端末のタブ同士だけでつながります</div>':'';
@@ -346,13 +425,13 @@ function vPlay(m){const u=S.uid,o=other(m,u),on=m.phase==='play',mine=m.turn===u
   else panel=`<div class="panel ${mine?'ask':''}"><div class="ttl center">${mine?'あなたの番<br>出すカードを1枚えらぼう':oppN+'が考え中…'}</div></div>`;
   const canPick=mine&&!lock,placing=canPick&&!!m.pick,L=m.line;let tl='';
   const slot=g=>!placing?'':S.sel===g?`<button class="tr pre" data-act="confirmgap">ここに置く（もう一度タップで決定）</button>`:`<button class="slot" data-act="gap" data-g="${g}">＋ ここ？</button>`;
-  L.forEach((id,i)=>{const c=CARDS[id],cls=m.last&&m.last.c===id?(m.last.ok?'ok':'ng'):'';tl+=slot(i)+`<div class="tr ${cls}" ${placing?`data-act="rowgap" data-i="${i}"`:''}><span class="y mono">${c.year}</span><span class="t">${esc(c.title)}</span></div>`});tl+=slot(L.length);
+  L.forEach((id,i)=>{const c=CARDS[id],cls=m.last&&m.last.c===id?(m.last.ok?'ok':'ng'):'';tl+=slot(i)+`<div class="tr ${cls}" data-k="${id}" ${placing?`data-act="rowgap" data-i="${i}"`:''}><span class="y mono">${c.year}</span><span class="t">${esc(c.title)}</span></div>`});tl+=slot(L.length);
   const cols=Math.max(3,hand.length);
   return `<div class="race"><div class="${mine?'act':''}"><span>あなた<em>${m.wins[u]}本</em></span><b>あと${hand.length}枚</b></div><div class="${on&&!mine?'act':''}"><span>${oppN}<em>${m.wins[o]}本</em></span><b>あと${m.hands[o].length}枚</b></div></div>
   <div class="goal"><span>${m.firstOut&&on?'相手は出し切った。これが最後の1手':'先に0枚で1本・2本とったら勝ち'}</span><span class="mono timer" id="tt"></span></div>
   ${panel}<div class="dir">▲ むかし<small>年が古い</small></div><div class="tl ${canPick&&!m.pick?'dim':''}">${tl}</div><div class="dir">▼ さいきん<small>年が新しい</small></div>
   <div class="foot"><span>自分の手札${mine&&m.pick?'（タップで選び直せます）':''}</span><span class="gem">💎 ${m.bet[u]} vs ${m.bet[o]}</span></div>
-  <div class="hand ${canPick?'':'dim'}" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${hand.map(id=>`<button class="hc ${CARDS[id].title.length>10?'l':CARDS[id].title.length>7?'m':''} ${m.pick===id&&mine?'on':canPick&&!m.pick?'can':''}" ${canPick?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`}
+  <div class="hand ${canPick?'':'dim'}" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${hand.map(id=>`<button class="hc ${CARDS[id].title.length>10?'l':CARDS[id].title.length>7?'m':''} ${m.pick===id&&mine?'on':canPick&&!m.pick?'can':''}" data-k="${id}" ${canPick?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`}
 function revAgain(r,id){if(r.re[id]==null){r.re[id]=r.i;r.q.push(id)}}
 function missList(m){return Object.keys(m.miss[S.uid]).map(id=>CARDS[id]).sort((a,b)=>a.year-b.year||(a.id<b.id?-1:1))}
 function vResult(m){const u=S.uid,o=other(m,u),p=me()||{},v=m.phase==='void',win=m.winner===u,miss=missList(m),done=p.ls===S.mid;
