@@ -74,6 +74,7 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--acc);outli
 .stage .row.ok .y{color:var(--ok);font-weight:700}
 .stage .row.ng{border:2px solid var(--ng);background:var(--ngd)}
 .stage .row.ng .y{color:var(--ng);font-weight:700}
+.stage .spark{position:absolute;z-index:6;width:9px;height:3px;border-radius:2px;pointer-events:none}
 .stage .row.float{position:absolute;z-index:5;margin:0;box-shadow:0 8px 20px var(--shadow);background:linear-gradient(var(--ngd),var(--ngd)),var(--panel);pointer-events:none}
 .stage .slot{flex:none;height:28px;border:1.5px dashed var(--acc);border-radius:8px;background:var(--accd);color:var(--acc);font-size:12.5px;font-weight:700;line-height:1;padding:0}
 .stage .slot.pre{background:var(--acc);color:var(--onacc);border-style:solid;height:32px}
@@ -142,6 +143,14 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--acc);outli
           <button class="chip" type="button" data-s="1" aria-pressed="true">ふつう（本番の速さ）</button>
           <button class="chip" type="button" data-s="2.5" aria-pressed="false">ゆっくり（確認用）</button>
         </div>
+      </div>
+      <div>
+        <h3>はじかれる・はまるの強さ</h3>
+        <div class="row-btns" id="fx">
+          <button class="chip" type="button" data-v="1" aria-pressed="true">派手め</button>
+          <button class="chip" type="button" data-v="0" aria-pressed="false">控えめ</button>
+        </div>
+        <p class="sub" style="font-size:13px;margin-top:6px">派手めは、はまったときに緑が光って小さな線が広がり、年号が一瞬大きくなります。はじかれるときは、前後のカードが強く押し返して遠くへ飛ばします。</p>
       </div>
       <div>
         <h3>音（「カチッ」と「コツン」）</h3>
@@ -240,8 +249,11 @@ const SND={on:true,ctx:null,
     g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.006);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
     o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+0.03)},
   snap(){this.tone(2600,1300,0.025,'square',0.04);this.tone(1318.5,1318.5,0.18,'sine',0.11,0.03)},
-  bump(){this.tone(190,105,0.15,'sine',0.28);this.tone(420,300,0.04,'triangle',0.05)}
+  bump(){this.tone(190,105,0.15,'sine',0.28);this.tone(420,300,0.04,'triangle',0.05)},
+  snapBig(){this.tone(2800,1400,0.03,'square',0.05);this.tone(1318.5,1318.5,0.16,'sine',0.12,0.03);this.tone(1975.5,1975.5,0.26,'sine',0.10,0.11)},
+  bumpBig(){this.tone(210,90,0.2,'sine',0.34);this.tone(480,260,0.05,'triangle',0.08);this.tone(150,80,0.16,'sine',0.2,0.12)}
 };
+const FX={big:true};
 
 class Stage{
   constructor(root,cfg){
@@ -337,27 +349,34 @@ class Stage{
     if(ok&&o.snap){
       // すき間に吸いこまれて、前後を少し押して収まる
       const okc=getComputedStyle(this.root).getPropertyValue('--ok').trim();
-      setTimeout(()=>this.snd('snap'),T(140));
+      const big=FX.big;
+      setTimeout(()=>this.snd(big?'snapBig':'snap'),T(140));
+      if(big)setTimeout(()=>this.sparks(nr,okc,12),T(150));
       await Promise.all([
-        nr.animate([{transform:'translateY(-6px) scale(1.07)'},{transform:'translateY(1px) scale(.97)',offset:.55},{transform:'none'}],{duration:T(340),easing:'cubic-bezier(.3,.7,.3,1)'}).finished,
-        nr.animate([{boxShadow:`0 0 0 0 ${okc}`},{boxShadow:'0 0 0 9px transparent'}],{duration:T(520),delay:T(140),easing:'ease-out'}).finished,
-        nudge(nb(-1),-3,T(240),T(140)),nudge(nb(1),3,T(240),T(140))]);
+        nr.animate(big?[{transform:'translateY(-14px) scale(1.18)'},{transform:'translateY(2px) scale(.93)',offset:.5},{transform:'translateY(-1px) scale(1.02)',offset:.78},{transform:'none'}]
+                      :[{transform:'translateY(-6px) scale(1.07)'},{transform:'translateY(1px) scale(.97)',offset:.55},{transform:'none'}],{duration:T(big?440:340),easing:'cubic-bezier(.3,.7,.3,1)'}).finished,
+        nr.animate([{boxShadow:`0 0 0 0 ${okc}`},{boxShadow:`0 0 0 ${big?18:9}px transparent`}],{duration:T(big?650:520),delay:T(140),easing:'ease-out'}).finished,
+        big?nr.animate([{backgroundColor:okc},{backgroundColor:'transparent'}],{duration:T(500),delay:T(140),easing:'ease-out'}).finished:null,
+        big?yEl.animate([{transform:'none'},{transform:'scale(1.45)',offset:.4},{transform:'none'}],{duration:T(420),delay:T(140),easing:'ease-out'}).finished:null,
+        nudge(nb(-1),big?-7:-3,T(big?300:240),T(140)),nudge(nb(1),big?7:3,T(big?300:240),T(140))]);
       if(!alive())return;
     }
     if(!ok){
       L.splice(L.indexOf(k),1);let cg=L.findIndex(x=>CARDS[x].y>c.y);if(cg<0)cg=L.length;
       if(o.bounce){
         // 前後のカードに押し返されて、外へはじき出される
-        this.snd('bump');
+        const big=FX.big,ngc=getComputedStyle(this.root).getPropertyValue('--ng').trim();
+        this.snd(big?'bumpBig':'bump');
         await Promise.all([
-          nr.animate([{transform:'none'},{transform:'scale(.94,.84)',offset:.5},{transform:'none'}],{duration:T(220),easing:'ease-out'}).finished,
-          nudge(this.tl.querySelector(`[data-k="${L[g-1]}"]`),3,T(220)),nudge(this.tl.querySelector(`[data-k="${L[g]}"]`),-3,T(220))]);
+          nr.animate([{transform:'none'},{transform:big?'scale(.9,.72)':'scale(.94,.84)',offset:.5},{transform:'none'}],{duration:T(big?260:220),easing:'ease-out'}).finished,
+          big?nr.animate([{boxShadow:`0 0 0 0 ${ngc}`},{boxShadow:'0 0 0 14px transparent'}],{duration:T(420),easing:'ease-out'}).finished:null,
+          nudge(this.tl.querySelector(`[data-k="${L[g-1]}"]`),big?8:3,T(big?260:220)),nudge(this.tl.querySelector(`[data-k="${L[g]}"]`),big?-8:-3,T(big?260:220))]);
         if(!alive())return;
         const rr=this.root.getBoundingClientRect(),a=nr.getBoundingClientRect();
         const f=nr.cloneNode(true);f.classList.add('float');
         Object.assign(f.style,{left:(a.left-rr.left)+'px',top:(a.top-rr.top)+'px',width:a.width+'px',height:a.height+'px'});
         this.root.append(f);
-        const out='translate(12px,-22px) rotate(-5deg) scale(.92)';
+        const out=big?'translate(20px,-36px) rotate(-10deg) scale(.9)':'translate(12px,-22px) rotate(-5deg) scale(.92)';
         const rs=[...this.tl.children].filter(r=>r!==nr),bf=rects(rs);nr.remove();
         await Promise.all([flip(rs,bf,T(300)),f.animate([{transform:'none'},{transform:out}],{duration:T(340),easing:'cubic-bezier(.2,1.5,.45,1)',fill:'forwards'}).finished]);
         await sleep(W(600));if(!alive())return;
@@ -388,6 +407,20 @@ class Stage{
     this.lastK=k;this.lastOk=ok;this.busy=false;
     this.renderAll();
     if(this.interactive&&!this.hand.length)this.setMsg('手札が0枚！ この1本はあなたの勝ち','ok');
+  }
+  sparks(el,color,n){
+    // 行のまわりから外へ、短い線が広がって消える
+    if(T(1)===0)return;
+    const rr=this.root.getBoundingClientRect(),r=el.getBoundingClientRect();
+    const cx=r.left-rr.left+r.width/2,cy=r.top-rr.top+r.height/2,rx=r.width/2,ry=r.height/2+2;
+    for(let i=0;i<n;i++){
+      const a=(i/n)*Math.PI*2+0.26,ex=Math.cos(a),ey=Math.sin(a);
+      const x=cx+ex*rx*(Math.abs(ex)>.5?1:.6),y=cy+ey*ry;
+      const s=document.createElement('div');s.className='spark';s.style.left=x+'px';s.style.top=y+'px';s.style.background=color;
+      const ang=Math.atan2(ey,ex)*180/Math.PI,d=14+(i%3)*5;
+      this.root.append(s);
+      s.animate([{transform:`translate(-50%,-50%) rotate(${ang}deg) translateX(0) scaleX(.4)`,opacity:1},{transform:`translate(-50%,-50%) rotate(${ang}deg) translateX(${d}px) scaleX(1)`,opacity:0}],{duration:T(480),easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'}).finished.then(()=>s.remove());
+    }
   }
   showGaps(nr,k){
     const L=this.line,i=L.indexOf(k),y=CARDS[k].y,rr=this.root.getBoundingClientRect(),run=this.run;
@@ -420,6 +453,7 @@ syncPresets();
 const liveOpts=()=>Object.fromEntries(OPTS.map(o=>[o.k,on.has(o.k)]));
 const live=new Stage(document.getElementById('live'),{interactive:true,opts:liveOpts,hand:['teppo','dan','taiho'],deck:['daibutsu','honno','insei']});
 document.getElementById('resetLive').addEventListener('click',()=>live.reset());
+document.querySelectorAll('#fx .chip').forEach(b=>b.addEventListener('click',()=>{FX.big=b.dataset.v==='1';document.querySelectorAll('#fx .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
 document.querySelectorAll('#sound .chip').forEach(b=>b.addEventListener('click',()=>{SND.on=b.dataset.v==='1';document.querySelectorAll('#sound .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));if(SND.on)SND.snap()}));
 document.querySelectorAll('#speed .chip').forEach(b=>b.addEventListener('click',()=>{speed=+b.dataset.s;document.querySelectorAll('#speed .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
 
