@@ -100,7 +100,8 @@ input::placeholder{color:var(--ph)}
 #app.compact .panel .ttl{font-size:17px}
 #app.compact .panel .ttl.v{font-size:19px}
 #app.compact .dir{font-size:12px;line-height:1}
-#app.compact .hand{height:62px}
+#app.compact .hand{height:76px;padding-top:8px}
+#app.compact .hc{height:66px;padding-top:17px}
 #app.compact .tl{gap:2px}
 .tl.thin .tr.pre{flex:1 1 0;padding-right:12px}
 .slot.thin{flex:none;height:0;max-height:none;border:none;background:none;padding:0;overflow:visible;position:relative;z-index:1}
@@ -112,12 +113,19 @@ input::placeholder{color:var(--ph)}
 .panel .goro em{font-style:normal;font-weight:700;color:var(--acc);font-family:"JetBrains Mono",monospace}
 .panel.rv{height:auto;min-height:128px}
 .foot{flex:none;display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
-.hand{flex:none;display:grid;gap:6px;height:84px;transition:opacity .2s}
-.hc{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:4px;font-size:clamp(11px,3.4vw,13.5px);font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;overflow:hidden;color:var(--ink);word-break:auto-phrase;text-wrap:balance;line-break:strict}
-.hc.m{font-size:clamp(10.5px,3.2vw,12.5px)}
-.hc.l{font-size:clamp(10px,2.9vw,11.5px)}
+.hand{flex:none;display:flex;gap:6px;align-items:flex-end;justify-content:center;height:100px;padding-top:10px;transition:opacity .2s}
+.hand.many{display:block;position:relative}
+.hc{position:relative;flex:0 1 84px;min-width:0;height:88px;border:1px solid var(--line);background:var(--panel);border-radius:9px;box-shadow:0 2px 6px rgba(27,34,51,.12);padding:19px 4px 5px;font-size:clamp(11px,3.4vw,13px);font-weight:900;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;overflow:hidden;color:var(--ink);word-break:auto-phrase;text-wrap:balance;line-break:strict;touch-action:none;transition:transform .18s cubic-bezier(.2,.7,.2,1),box-shadow .18s}
+.hc::before{content:"？？？？年";position:absolute;left:0;right:0;top:0;height:16px;background:var(--acc);color:var(--onacc);font:700 10px/16px "JetBrains Mono",monospace;letter-spacing:.06em}
+.hand.many .hc{position:absolute;bottom:0;width:74px}
+.hc.m{font-size:clamp(10.5px,3.2vw,12px)}
+.hc.l{font-size:clamp(10px,2.9vw,11px)}
 .hc.can{border:2px solid var(--acc)}
-.hc.on{border:2px solid var(--acc);background:var(--accd);color:var(--acc)}
+.hc.on{border:2px solid var(--acc);background:linear-gradient(var(--accd),var(--accd)),var(--panel);color:var(--acc);transform:translateY(-10px);box-shadow:0 10px 18px rgba(42,63,199,.28);z-index:60}
+.hc.on::before{background:#2a3fc7}
+.drag-ghost{position:fixed!important;z-index:70;pointer-events:none;margin:0;opacity:.95;transform:scale(.62) rotate(-3deg)!important;transform-origin:50% 100%;box-shadow:0 12px 24px rgba(27,34,51,.3)!important;left:0;top:0}
+.drag-line{position:fixed;z-index:69;height:0;border-top:3px solid var(--acc);pointer-events:none}
+.drag-line b{position:absolute;left:6px;top:-12px;background:var(--acc);color:var(--onacc);font-size:12px;font-weight:900;border-radius:99px;padding:0 10px;line-height:21px}
 /* result */
 .rescard{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .res{font-size:30px;font-weight:900}
@@ -153,7 +161,7 @@ input::placeholder{color:var(--ph)}
 <script>
 "use strict";
 /* ========== 設定（ルールの数字はここで変えられます） ========== */
-const RULE={hand:4,lineMax:15,winsNeeded:2,turnSec:30,betSec:30,roundGapSec:4,voidSec:60,startGems:10,thinAt:5,compactAt:10};
+const RULE={hand:4,lineMax:15,winsNeeded:2,turnSec:30,betSec:30,roundGapSec:4,voidSec:60,startGems:10,thinAt:5,compactAt:10,drag:false};
 
 /* ========== 小道具 ========== */
 const $=s=>document.querySelector(s), app=$('#app');
@@ -306,6 +314,36 @@ async function animPlace(snap,m){const l=m.last,fallback=()=>SFX.play(l.ok?'ok':
   }catch(e){console.error('anim',e);if(alive()){lastHtml='';render()}}
 }
 
+/* ========== 手札（6枚以上は少しずつ重ねて並べる） ========== */
+function layoutHand(){const h=app.querySelector('.hand.many');if(!h)return;const cs=[...h.querySelectorAll('.hc')],n=cs.length,W=h.clientWidth,w=cs[0]?cs[0].offsetWidth:74;
+  const step=n>1?Math.min(w+6,(W-w)/(n-1)):0,x0=(W-(w+step*(n-1)))/2;cs.forEach((c,i)=>{c.style.left=(x0+step*i)+'px';c.style.zIndex=c.classList.contains('on')?60:i})}
+addEventListener('resize',layoutHand);
+
+/* ========== 手札を年表へ引っぱって「置く場所を選ぶ」（RULE.drag のときだけ）
+   引っぱるのは選ぶところまで。指を離しても置かれず、「ここに置く」をタップして決める ========== */
+let DRAG=null,dragEnd=0;
+function gapAt(y){const tl=app.querySelector('.tl');if(!tl)return null;const tr=tl.getBoundingClientRect();if(y<tr.top-24||y>tr.bottom+24)return null;
+  const rs=[...tl.querySelectorAll('.tr[data-k]')].map(e=>e.getBoundingClientRect());if(!rs.length)return{g:0,y:(tr.top+tr.bottom)/2,tr};
+  const b=[rs[0].top-2];for(let i=1;i<rs.length;i++)b.push((rs[i-1].bottom+rs[i].top)/2);b.push(rs[rs.length-1].bottom+2);
+  let g=0;b.forEach((v,i)=>{if(Math.abs(v-y)<Math.abs(b[g]-y))g=i});return{g,y:b[g],tr}}
+function dragStop(){if(!DRAG)return;if(DRAG.ghost)DRAG.ghost.remove();if(DRAG.line)DRAG.line.remove();DRAG=null}
+app.addEventListener('pointerdown',e=>{if(!RULE.drag||DRAG)return;const b=e.target.closest('.hc[data-act="pick"]');if(!b)return;
+  DRAG={id:e.pointerId,x0:e.clientX,y0:e.clientY,c:b.dataset.k,on:false,g:null}});
+addEventListener('pointermove',e=>{const d=DRAG;if(!d||d.id!==e.pointerId)return;
+  if(!d.on){const dx=e.clientX-d.x0,dy=e.clientY-d.y0;if(Math.hypot(dx,dy)<10)return;if(dy>0||Math.abs(dy)<Math.abs(dx)*.8)return dragStop();
+    const src=app.querySelector(`.hand .hc[data-k="${d.c}"]`);if(!src)return dragStop();
+    d.on=true;const r=src.getBoundingClientRect();d.w=r.width;d.h=r.height;
+    d.ghost=src.cloneNode(true);d.ghost.classList.remove('on','can');d.ghost.classList.add('drag-ghost');d.ghost.removeAttribute('data-act');Object.assign(d.ghost.style,{width:r.width+'px',height:r.height+'px'});document.body.append(d.ghost);
+    d.line=document.createElement('div');d.line.className='drag-line';d.line.innerHTML='<b>ここ？</b>';d.line.hidden=true;document.body.append(d.line);
+    if(!S.match||S.match.pick!==d.c){SFX.play('pick');pickCard(d.c)}}
+  e.preventDefault();
+  const py=e.clientY-48;d.ghost.style.left=(e.clientX-d.w/2)+'px';d.ghost.style.top=(py-8-d.h)+'px';
+  const gp=gapAt(py);d.g=gp?gp.g:null;d.line.hidden=!gp;
+  if(gp){Object.assign(d.line.style,{left:gp.tr.left+'px',width:gp.tr.width+'px',top:gp.y+'px'});if(d.lastG!==gp.g){d.lastG=gp.g;SFX.play('tap')}}},{passive:false});
+function dragUp(e){const d=DRAG;if(!d||d.id!==e.pointerId)return;const was=d.on,g=d.g;dragStop();if(!was)return;dragEnd=Date.now();
+  if(g!=null&&e.type==='pointerup'){S.sel=g;SFX.play('sel')}render()}
+addEventListener('pointerup',dragUp);addEventListener('pointercancel',dragUp);
+
 /* ========== 対戦のルール（データの書きかえ） ========== */
 function pass(m,mover){m.turn=other(m,mover);m.turnStart=DB.now();m.pick=null;m.pickAt=null}
 function endRound(m,winner){m.phase='roundEnd';m.rw=winner||'draw';m.rEnd=DB.now();m.pick=null;m.pickAt=null;m.firstOut=false;if(winner)m.wins[winner]=(m.wins[winner]||0)+1}
@@ -405,7 +443,7 @@ function render(){
   app.className=(wide?'wide':'')+(S.compact?' compact':'');
   if(!S.role&&($('#code')||$('#gems'))&&!S.homeErr&&!S.homeDirty)return;S.homeDirty=false;
   if(h===lastHtml&&app.innerHTML){lastKey=uiKey();return tickDom()}
-  animCleanup();app.innerHTML=h;lastHtml=h;lastKey=uiKey();S.homeErr='';tickDom();
+  animCleanup();app.innerHTML=h;lastHtml=h;layoutHand();lastKey=uiKey();S.homeErr='';tickDom();
 }
 function vHome(){const pre=new URLSearchParams(location.search).get('room')||'';
   const title=`<h1><small>歴史カード対戦</small>年号ならべ<br>バトル<span style="font-size:.45em;color:var(--sub)">（仮）</span></h1>`,demo=DB.demo?'<div class="demo">デモモード：この端末のタブ同士だけでつながります</div>':'';
@@ -451,8 +489,8 @@ function vPlay(m){const u=S.uid,o=other(m,u),on=m.phase==='play',mine=m.turn===u
   return `<div class="race"><div class="${mine?'act':''}"><span>あなた<em>${m.wins[u]}本</em></span><b>あと${hand.length}枚</b></div><div class="${on&&!mine?'act':''}"><span>${oppN}<em>${m.wins[o]}本</em></span><b>あと${m.hands[o].length}枚</b></div></div>
   <div class="goal"><span>${m.firstOut&&on?'相手は出し切った。これが最後の1手':'先に0枚で1本・2本とったら勝ち'}</span><span class="mono timer" id="tt"></span></div>
   ${panel}<div class="dir">▲ むかし<small>年が古い</small></div><div class="tl ${canPick&&!m.pick?'dim':''} ${thin?'thin':''}">${tl}</div><div class="dir">▼ さいきん<small>年が新しい</small></div>
-  <div class="foot"><span>自分の手札${mine&&m.pick?'（タップで選び直せます）':''}</span><span class="gem">💎 ${m.bet[u]} vs ${m.bet[o]}</span></div>
-  <div class="hand ${canPick?'':'dim'}" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${hand.map(id=>`<button class="hc ${CARDS[id].title.length>10?'l':CARDS[id].title.length>7?'m':''} ${m.pick===id&&mine?'on':canPick&&!m.pick?'can':''}" data-k="${id}" ${canPick?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`}
+  <div class="foot"><span>自分の手札${mine&&m.pick?'（タップで選び直せます）':RULE.drag&&canPick?'（年表へ引っぱっても選べます）':''}</span><span class="gem">💎 ${m.bet[u]} vs ${m.bet[o]}</span></div>
+  <div class="hand ${canPick?'':'dim'} ${hand.length>=6?'many':''}">${hand.map(id=>`<button class="hc ${CARDS[id].title.length>10?'l':CARDS[id].title.length>7?'m':''} ${m.pick===id&&mine?'on':canPick&&!m.pick?'can':''}" data-k="${id}" ${canPick?`data-act="pick" data-c="${id}"`:''}>${esc(CARDS[id].title)}</button>`).join('')}</div>`}
 function goro(c){return c.goro?`<div class="goro"><b>覚え方</b>${esc(c.goro).replace(/（(\d+)）/g,'（<em>$1</em>）')}</div>`:''}
 function revAgain(r,id){if(r.re[id]==null){r.re[id]=r.i;r.q.push(id)}}
 function missList(m){return Object.keys(m.miss[S.uid]).map(id=>CARDS[id]).sort((a,b)=>a.year-b.year||(a.id<b.id?-1:1))}
@@ -500,7 +538,7 @@ function tick(){
 }
 
 /* ========== 操作 ========== */
-app.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled)return;const a=t.dataset.act,m=S.match;
+app.addEventListener('click',e=>{if(Date.now()-dragEnd<400)return;const t=e.target.closest('[data-act]');if(!t||t.disabled)return;const a=t.dataset.act,m=S.match;
   if(a==='pick')SFX.play('pick');else if(a==='gap'||a==='rowgap')SFX.play('sel');else if(a!=='key'&&a!=='sfx'&&a!=='confirmgap')SFX.play('tap');
   if(a==='sfx'){SFX.toggle();S.homeDirty=true;render();return}
   if(a==='join')joinRoom().catch(()=>homeErr('通信できませんでした'));
