@@ -378,13 +378,16 @@ function dragOpen(d,g){const tl=app.querySelector('.tl');if(!tl)return;tl.classL
   if(g===d.g&&d.ph&&d.ph.isConnected)return;const all=[...tl.children].filter(e=>e!==d.ph),before=new Map(all.map(e=>[e,e.getBoundingClientRect()]));
   if(g==null){if(d.ph)d.ph.remove()}else{if(!d.ph){d.ph=document.createElement('div');d.ph.className='tr dph'}const ref=tlRows()[g];tl.insertBefore(d.ph,ref||null)}
   if(g!==d.g&&g!=null)SFX.play('tap');d.g=g;flipFrom(all,e=>before.get(e),150)}
+// 引っぱり中の絵を必ず片付ける（指を離したことが届かなかったときの保険）
+function dragReset(){const d=DRAG;DRAG=null;if(d){if(d.ph)d.ph.remove();try{document.body.releasePointerCapture(d.id)}catch(e){}}
+  document.querySelectorAll('.drag-card').forEach(e=>e.remove());const tl=app.querySelector('.tl.dragging');if(tl)tl.classList.remove('dragging')}
 function dragHideSrc(d){const src=app.querySelector(`.hand .hc[data-k="${d.c}"]`);if(src)src.style.visibility='hidden';return src}
-app.addEventListener('pointerdown',e=>{if(!RULE.drag||DRAG)return;const b=e.target.closest('.hc[data-act="pick"]');if(!b)return;
+app.addEventListener('pointerdown',e=>{if(!RULE.drag)return;if(DRAG){if(DRAG.done)return;dragReset();lastHtml='';render()}const b=e.target.closest('.hc[data-act="pick"]');if(!b)return;
   DRAG={id:e.pointerId,x0:e.clientX,y0:e.clientY,c:b.dataset.k,on:false,g:null}});
 addEventListener('pointermove',e=>{const d=DRAG;if(!d||d.id!==e.pointerId||d.done)return;
   if(!d.on){const dx=e.clientX-d.x0,dy=e.clientY-d.y0;if(Math.hypot(dx,dy)<10)return;if(dy>0||Math.abs(dy)<Math.abs(dx)*.8){DRAG=null;return}
     const src=app.querySelector(`.hand .hc[data-k="${d.c}"]`);if(!src){DRAG=null;return}
-    d.on=true;const r=src.getBoundingClientRect();d.w=r.width;d.h=r.height;d.from=r;
+    d.on=true;try{document.body.setPointerCapture(d.id)}catch(err){}const r=src.getBoundingClientRect();d.w=r.width;d.h=r.height;d.from=r;
     d.card=src.cloneNode(true);d.card.classList.remove('on','can');d.card.classList.add('drag-card');d.card.removeAttribute('data-act');
     Object.assign(d.card.style,{width:r.width+'px',height:r.height+'px',left:r.left+'px',top:r.top+'px',visibility:''});document.body.append(d.card);
     if(!S.match||S.match.pick!==d.c){SFX.play('pick');pickCard(d.c)}}
@@ -394,10 +397,13 @@ addEventListener('pointermove',e=>{const d=DRAG;if(!d||d.id!==e.pointerId||d.don
 async function dragUp(e){const d=DRAG;if(!d||d.id!==e.pointerId||d.done)return;if(!d.on){DRAG=null;return}d.done=true;dragEnd=Date.now();
   const g=e.type==='pointerup'?d.g:null,c=d.card,from=c.getBoundingClientRect();
   const to=g!=null&&d.ph&&d.ph.isConnected?d.ph.getBoundingClientRect():(dragHideSrc(d)||{getBoundingClientRect:()=>d.from}).getBoundingClientRect();
-  try{await c.animate([{left:from.left+'px',top:from.top+'px',width:from.width+'px',height:from.height+'px'},{left:to.left+'px',top:to.top+'px',width:to.width+'px',height:to.height+'px'}],{duration:220,easing:EZ,fill:'forwards'}).finished}catch(err){}
-  c.remove();if(d.ph)d.ph.remove();DRAG=null;
+  try{await Promise.race([c.animate([{left:from.left+'px',top:from.top+'px',width:from.width+'px',height:from.height+'px'},{left:to.left+'px',top:to.top+'px',width:to.width+'px',height:to.height+'px'}],{duration:220,easing:EZ,fill:'forwards'}).finished,wait(400)])}catch(err){}
+  if(DRAG!==d){c.remove();return}dragReset();
   if(g!=null){S.sel=g;SFX.play('sel')}lastHtml='';render()}
 addEventListener('pointerup',dragUp);addEventListener('pointercancel',dragUp);
+document.body.addEventListener('lostpointercapture',e=>{if(DRAG&&DRAG.on&&!DRAG.done&&DRAG.id===e.pointerId)dragUp({type:'pointercancel',pointerId:e.pointerId})});
+addEventListener('blur',()=>{if(DRAG&&!DRAG.done){dragReset();lastHtml='';render()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&DRAG&&!DRAG.done){dragReset();lastHtml='';render()}});
 
 /* ========== 対戦のルール（データの書きかえ） ========== */
 function pass(m,mover){m.turn=other(m,mover);m.turnStart=DB.now();m.pick=null;m.pickAt=null}
@@ -499,7 +505,7 @@ function render(){
   app.className=(wide?'wide':'')+(S.compact?' compact':'');
   if(!S.role&&($('#code')||$('#gems'))&&!S.homeErr&&!S.homeDirty)return;S.homeDirty=false;
   if(h===lastHtml&&app.innerHTML){lastKey=uiKey();return tickDom()}
-  animCleanup();app.innerHTML=h;lastHtml=h;layoutHand();lastKey=uiKey();S.homeErr='';tickDom();
+  animCleanup();if(!DRAG)document.querySelectorAll('.drag-card').forEach(e=>e.remove());app.innerHTML=h;lastHtml=h;layoutHand();lastKey=uiKey();S.homeErr='';tickDom();
 }
 function vHome(){const pre=new URLSearchParams(location.search).get('room')||'';
   const title=`<h1><small>歴史カード対戦</small>年号ならべ<br>バトル<span style="font-size:.45em;color:var(--sub)">（仮）</span></h1>`,demo=DB.demo?'<div class="demo">デモモード：この端末のタブ同士だけでつながります</div>':'';
