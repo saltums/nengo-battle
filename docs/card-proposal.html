@@ -1,0 +1,237 @@
+<title>手札の見せ方の提案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* アプリと同じ白地に青。スマホ1画面（375×667）の見本を4つ並べて比べる */
+:root{
+  --page:#ffffff;--bg:#f3f5fa;--panel:#ffffff;--line:#d6dbe8;--ink:#1b2233;--ink2:#3d465c;--sub:#667089;
+  --acc:#3d5afe;--accdeep:#2a3fc7;--onacc:#ffffff;--accd:rgba(61,90,254,.08);--ok:#0f9d63;--ng:#e5484d;
+  --cardbg:#ffffff;--cardshadow:rgba(27,34,51,.14);--cardshadow2:rgba(42,63,199,.28);
+  --font:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#10131b;--bg:#171c27;--panel:#1f2533;--line:#323a50;--ink:#e8ecf5;--ink2:#c3cad9;--sub:#939cb2;
+  --acc:#7b91ff;--accdeep:#5d74f0;--onacc:#0f1320;--accd:rgba(123,145,255,.14);--ok:#3fcb8f;--ng:#ff7377;
+  --cardbg:#262d3e;--cardshadow:rgba(0,0,0,.45);--cardshadow2:rgba(123,145,255,.35);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --page:#10131b;--bg:#171c27;--panel:#1f2533;--line:#323a50;--ink:#e8ecf5;--ink2:#c3cad9;--sub:#939cb2;
+  --acc:#7b91ff;--accdeep:#5d74f0;--onacc:#0f1320;--accd:rgba(123,145,255,.14);--ok:#3fcb8f;--ng:#ff7377;
+  --cardbg:#262d3e;--cardshadow:rgba(0,0,0,.45);--cardshadow2:rgba(123,145,255,.35);color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.75}
+.wrap{max-width:1600px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px;display:flex;flex-direction:column;gap:36px}
+h1{font-size:clamp(22px,4.6vw,30px);font-weight:900;line-height:1.35;margin:0;text-wrap:balance;word-break:auto-phrase}
+h2{font-size:18px;font-weight:900;margin:0;line-height:1.4;word-break:auto-phrase}
+p{margin:0}
+.kicker{font-size:12px;font-weight:700;color:var(--acc);letter-spacing:.08em}
+.lead{color:var(--sub);max-width:64ch}
+header{display:flex;flex-direction:column;gap:10px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.bar b{font-size:14px;margin-right:4px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:6px 14px;font-size:13.5px;font-weight:700;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:28px}
+.opt{display:flex;flex-direction:column;gap:12px;min-width:0}
+.opt .hd{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.letter{font-family:var(--mono);font-weight:700;color:var(--acc);margin-right:6px}
+.badge{flex:none;font-size:12px;font-weight:700;border-radius:99px;padding:2px 10px;border:1px solid var(--acc);color:var(--acc);line-height:1.6}
+.badge.rec{background:var(--acc);color:var(--onacc)}
+.badge.low{border-color:var(--line);color:var(--sub)}
+.measure{font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums}
+.measure b{color:var(--ink);font-family:var(--mono)}
+.opt ul{margin:0;padding-left:1.2em;font-size:14px;display:flex;flex-direction:column;gap:3px}
+.opt li.minus{color:var(--sub)}
+
+/* スマホの見本（375×667 を縮めて表示） */
+.fit{width:100%;max-width:375px;position:relative}
+.phone{width:375px;height:667px;transform-origin:0 0;position:absolute;left:0;top:0;background:var(--bg);border:1px solid var(--line);border-radius:26px;overflow:hidden;
+  display:flex;flex-direction:column;gap:10px;padding:12px 14px;user-select:none;-webkit-user-select:none}
+.race{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.race div{border:1px solid var(--line);border-radius:10px;padding:5px 10px;font-size:12px;color:var(--sub);display:flex;justify-content:space-between;align-items:center}
+.race div.act{border-color:var(--acc);color:var(--ink)}
+.race b{font-size:16px;color:var(--ink);font-weight:900}
+.goal{flex:none;display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+.goal span:last-child{font-family:var(--mono);color:var(--ink);font-size:14px}
+.pnl{flex:none;height:128px;border:1px solid var(--acc);background:var(--accd);border-radius:14px;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:4px;overflow:hidden}
+.pnl .who{font-size:12px;color:var(--sub)}
+.pnl .ttl{font-size:18px;font-weight:900;line-height:1.35}
+.pnl .txt{font-size:14px;line-height:1.5;color:var(--ink2)}
+.dir{flex:none;font-size:13px;font-weight:700;color:var(--acc);text-align:center;line-height:1.2}
+.dir small{font-size:11px;font-weight:500;color:var(--sub);margin-left:6px}
+.tl{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.tr{flex:1 1 0;min-height:0;max-height:50px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid var(--line);border-radius:8px;font-size:14.6px;background:var(--panel);overflow:hidden}
+.tr .y{width:44px;flex:none;color:var(--sub);font-family:var(--mono)}
+.tr .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.foot{flex:none;display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+
+/* A 今のまま */
+.handA{flex:none;display:grid;gap:6px;height:84px}
+.handA button{border:2px solid var(--acc);background:var(--panel);border-radius:10px;padding:4px;font-size:12.5px;font-weight:700;line-height:1.3;word-break:auto-phrase;text-wrap:balance;color:var(--ink)}
+.handA button.on{background:var(--accd);color:var(--acc)}
+
+/* カードらしい見た目（B・C 共通） */
+.cf{position:relative;background:var(--cardbg);border:1px solid var(--line);border-radius:9px;box-shadow:0 2px 6px var(--cardshadow);
+  display:flex;flex-direction:column;align-items:center;padding:0 5px 6px;overflow:hidden;color:var(--ink);
+  transition:transform .18s cubic-bezier(.2,.7,.2,1),box-shadow .18s,border-color .18s}
+.cf::before{content:"";position:absolute;left:0;right:0;top:0;height:16px;background:var(--acc);opacity:.9}
+.cf .q{position:relative;z-index:1;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--onacc);line-height:16px;letter-spacing:.06em}
+.cf .nm{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12.5px;font-weight:900;line-height:1.3;word-break:auto-phrase;text-wrap:balance;line-break:strict;padding-top:2px}
+.cf.on{border:2px solid var(--acc);box-shadow:0 10px 18px var(--cardshadow2);transform:translateY(-12px)}
+.cf.on::before{background:var(--accdeep);opacity:1}
+
+/* B 並べて持つ */
+.handB{flex:none;height:104px;display:flex;align-items:flex-end;justify-content:center;padding-top:12px}
+.handB .cf{height:92px;flex:0 1 82px;min-width:0}
+.handB.many{display:block;position:relative}
+.handB.many .cf{position:absolute;bottom:0;width:74px}
+/* C 扇形に持つ */
+.handC{flex:none;height:112px;position:relative}
+.handC .cf{position:absolute;bottom:0;width:78px;height:100px;transform-origin:50% 140%}
+/* D スライドで選ぶ */
+.handD{flex:none;height:140px;display:flex;flex-direction:column;gap:6px;margin-inline:-14px}
+.track{flex:1;display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-inline:calc(50% - 105px);scrollbar-width:none;align-items:center}
+.track::-webkit-scrollbar{display:none}
+.track .cd{flex:none;width:210px;height:118px;scroll-snap-align:center;background:var(--cardbg);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 6px var(--cardshadow);
+  display:flex;flex-direction:column;overflow:hidden;transition:transform .2s,opacity .2s,border-color .2s;transform:scale(.88);opacity:.55;text-align:left;padding:0}
+.track .cd .bd{height:20px;flex:none;background:var(--acc);color:var(--onacc);font-family:var(--mono);font-size:11px;font-weight:700;line-height:20px;padding:0 10px;letter-spacing:.06em}
+.track .cd .nm{font-size:15px;font-weight:900;padding:6px 10px 2px;line-height:1.3}
+.track .cd .tx{font-size:12px;color:var(--ink2);padding:0 10px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.track .cd.on{transform:none;opacity:1;border:2px solid var(--acc);box-shadow:0 8px 16px var(--cardshadow2)}
+.dots{flex:none;display:flex;justify-content:center;gap:6px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--acc)}
+
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px}
+.box{border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.box ul,.box ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px}
+.sub{color:var(--sub)}
+@media (prefers-reduced-motion: reduce){.cf,.track .cd{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">年号ならべバトル（仮）・見た目の提案</div>
+    <h1>手札の見せ方 4つの案</h1>
+    <p class="lead">手札を、ボタンではなく「手に持ったカード」に見えるようにする案です。どの見本も、実際のスマホ（幅375×高さ667）と同じ配置で、手札をタップすると選べます。Dだけは、横にすべらせて選べます。手札が大きくなると年表に使える高さが減るので、各案の下にその高さを出しています。</p>
+    <div class="bar" role="group" aria-label="手札の枚数">
+      <b>手札の枚数</b>
+      <button class="chip" type="button" data-n="3" aria-pressed="false">3枚</button>
+      <button class="chip" type="button" data-n="4" aria-pressed="true">4枚（配った直後）</button>
+      <button class="chip" type="button" data-n="6" aria-pressed="false">6枚</button>
+      <button class="chip" type="button" data-n="8" aria-pressed="false">8枚</button>
+    </div>
+  </header>
+
+  <section class="grid" id="grid"></section>
+
+  <section class="two" aria-label="まとめ">
+    <div class="box">
+      <h2>おすすめ：B 並べて持つ</h2>
+      <p>選び方は今と同じタップのままで、見た目だけカードにします。選んだカードが少し持ち上がるので、どれを出そうとしているかがはっきりします。カードの上の帯には、まだ分からない年号として「？？？？年」を出し、年号を当てるカードだということを見た目で伝えます。</p>
+      <p class="sub">手札が6枚以上になったら、少しずつ重ねて並べます（「6枚」「8枚」で見られます）。選んだカードは一番上に出てくるので、名前が全部読めます。今の形（A）は8枚になると文字が細く折れて読みにくくなるので、それも直せます。</p>
+    </div>
+    <div class="box">
+      <h2>D スライドで選ぶ について</h2>
+      <ul>
+        <li>カードが大きく、説明文まで読めるのはいちばんの良さです</li>
+        <li>一方で、手札の全体が一度に見えません。「どのカードなら自信があるか」を見比べて選ぶ、というこのゲームの考えどころが、やりにくくなります</li>
+        <li>手札の場所が高くなるので、年表に使える高さがいちばん減ります</li>
+        <li>調査レポートでは、指で引っぱる操作は失敗が多いとされていました。Dでは横のカードをタップしても選べるので、すべらせなくても操作できます</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h2>決めてほしいこと</h2>
+      <ol>
+        <li>どの案にするか（A〜D）</li>
+        <li>カードの上の帯に何を出すか（今の案は「？？？？年」。時代の名前を入れる、色を時代で変える、などもできます）</li>
+        <li>先生のカードのデザインがあれば、それに寄せるかどうか</li>
+      </ol>
+    </div>
+  </section>
+</div>
+
+<script>
+(()=>{
+const CARDS=[
+  {t:'鉄砲伝来',x:'ポルトガル人を乗せた船が種子島に流れ着き、鉄砲が伝わった。'},
+  {t:'壇ノ浦の戦い',x:'源義経らが平氏をほろぼした戦い。'},
+  {t:'大宝律令',x:'唐の法律にならって作られた決まり。律令国家のしくみが整った。'},
+  {t:'参勤交代の制度化',x:'徳川家光が、大名に1年おきに江戸と領地を行き来させる決まりを加えた。'},
+  {t:'東大寺の大仏開眼',x:'聖武天皇の願いで造られた大仏が完成し、開眼の儀式が行われた。'},
+  {t:'平清盛が太政大臣になる',x:'武士として初めて太政大臣になり、平氏が栄えた。'},
+  {t:'本能寺の変',x:'明智光秀が織田信長をおそい、信長は自害した。'},
+  {t:'院政の開始',x:'白河上皇が、天皇の位をゆずったあとも政治を動かした。'},
+];
+const LINE=[[645,'大化の改新'],[794,'平安京に都を移す'],[1221,'承久の乱'],[1467,'応仁の乱'],[1600,'関ヶ原の戦い']];
+const OPTS=[
+  {k:'A',n:'今のまま（ボタン）',badge:'low',bl:'くらべる用',plus:['今の形。押しやすい'],minus:['カードを持っている感じがしない']},
+  {k:'B',n:'並べて持つ',badge:'rec',bl:'おすすめ',plus:['タップで選ぶのは今と同じ','選んだカードが持ち上がって分かりやすい','カードらしい見た目','6枚以上は重ねて並べる'],minus:['重なったカードは名前の一部が隠れる']},
+  {k:'C',n:'扇形に持つ',badge:'',bl:'検討',plus:['手に持っている感じがいちばん強い','8枚になっても場所が足りる'],minus:['重なった部分の文字が隠れる','かたむいた文字は少し読みにくい']},
+  {k:'D',n:'スライドで選ぶ',badge:'',bl:'検討',plus:['カードが大きく、説明文まで読める','横のカードをタップしても選べる'],minus:['手札全体を一度に見比べられない','年表に使える高さがいちばん減る']},
+];
+let N=4;const BASE_TL={};
+const grid=document.getElementById('grid');
+const frames=[];
+function panelHtml(c){return c?`<div class="who">年の古い順にならべよう</div><div class="ttl">「${c.t}」はどこに入る？</div><div class="txt">${c.x}</div>`:`<div class="ttl" style="text-align:center">あなたの番<br>出すカードを1枚えらぼう</div>`}
+function shell(){return `<div class="race"><div class="act"><span>あなた</span><b>あと${N}枚</b></div><div><span>あいて</span><b>あと4枚</b></div></div>
+  <div class="goal"><span>先に0枚で1本・2本とったら勝ち</span><span>のこり 30秒</span></div>
+  <div class="pnl"></div><div class="dir">▲ むかし<small>年が古い</small></div>
+  <div class="tl">${LINE.map(([y,t])=>`<div class="tr"><span class="y">${y}</span><span class="t">${t}</span></div>`).join('')}</div>
+  <div class="dir">▼ さいきん<small>年が新しい</small></div><div class="foot"><span>自分の手札</span><span>💎 1 vs 1</span></div><div class="hand"></div>`}
+function build(o){
+  const el=document.createElement('article');el.className='opt';
+  el.innerHTML=`<div class="hd"><h2><span class="letter">${o.k}</span>${o.n}</h2><span class="badge ${o.badge}">${o.bl}</span></div>
+    <div class="fit"><div class="phone"></div></div><p class="measure"></p>
+    <ul>${o.plus.map(s=>`<li>${s}</li>`).join('')}${o.minus.map(s=>`<li class="minus">△ ${s}</li>`).join('')}</ul>`;
+  grid.append(el);
+  const f={o,el,phone:el.querySelector('.phone'),fit:el.querySelector('.fit'),measure:el.querySelector('.measure'),sel:null};
+  frames.push(f);return f}
+function select(f,i){f.sel=i;f.phone.querySelector('.pnl').innerHTML=panelHtml(i==null?null:CARDS[i]);
+  f.phone.querySelectorAll('[data-i]').forEach(b=>b.classList.toggle('on',+b.dataset.i===i));
+  if(f.o.k==='C')layoutFan(f);
+  if(f.o.k==='B'&&N>=6)layoutRow(f,'.handB .cf',false);
+  if(f.o.k==='D')f.phone.querySelectorAll('.dots i').forEach((d,j)=>d.classList.toggle('on',j===i))}
+// カードを少しずつ重ねて並べる（C は扇形にかたむける、B は手札が多いときだけまっすぐ重ねる）
+function layoutRow(f,sel,fan){const cs=[...f.phone.querySelectorAll(sel)],n=cs.length,pad=fan?14:0,W=347-pad*2,w=cs[0]?cs[0].offsetWidth:74;
+  const step=n>1?Math.min(w+6,(W-w)/(n-1)):0,start=pad+(W-(w+step*(n-1)))/2,ang=fan?Math.min(5,22/Math.max(1,n-1)):0;
+  cs.forEach((c,i)=>{const on=f.sel===i,r=(i-(n-1)/2)*ang;c.style.left=(start+step*i)+'px';c.style.zIndex=on?50:i;
+    c.style.transform=on?'translateY(-14px)':`rotate(${r}deg) translateY(${fan?Math.abs(i-(n-1)/2)*2:0}px)`})}
+function layoutFan(f){layoutRow(f,'.handC .cf',true)}
+function render(f){
+  f.phone.innerHTML=shell();const hand=f.phone.querySelector('.hand'),cards=CARDS.slice(0,N);
+  const k=f.o.k;
+  if(k==='A'){hand.className='handA';hand.style.gridTemplateColumns=`repeat(${Math.max(3,N)},minmax(0,1fr))`;
+    hand.innerHTML=cards.map((c,i)=>`<button type="button" data-i="${i}">${c.t}</button>`).join('')}
+  if(k==='B'){hand.className='handB'+(N>=6?' many':'');hand.style.gap='6px';
+    hand.innerHTML=cards.map((c,i)=>`<button type="button" class="cf" data-i="${i}"><span class="q">？？？？年</span><span class="nm">${c.t}</span></button>`).join('')}
+  if(k==='C'){hand.className='handC';
+    hand.innerHTML=cards.map((c,i)=>`<button type="button" class="cf" data-i="${i}"><span class="q">？？？？年</span><span class="nm">${c.t}</span></button>`).join('')}
+  if(k==='D'){hand.className='handD';
+    hand.innerHTML=`<div class="track">${cards.map((c,i)=>`<button type="button" class="cd" data-i="${i}"><span class="bd">？？？？年</span><span class="nm">${c.t}</span><span class="tx">${c.x}</span></button>`).join('')}</div><div class="dots">${cards.map(()=>'<i></i>').join('')}</div>`;
+    const tr=hand.querySelector('.track');let tm;
+    tr.addEventListener('scroll',()=>{clearTimeout(tm);tm=setTimeout(()=>{const mid=tr.scrollLeft+tr.clientWidth/2;let best=0,bd=1e9;
+      tr.querySelectorAll('.cd').forEach((c,i)=>{const d=Math.abs(c.offsetLeft+c.offsetWidth/2-mid);if(d<bd){bd=d;best=i}});if(best!==f.sel)select(f,best)},90)},{passive:true});
+    requestAnimationFrame(()=>{const c=tr.querySelectorAll('.cd')[0];tr.scrollLeft=c.offsetLeft+c.offsetWidth/2-tr.clientWidth/2});
+  }
+  hand.addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;const i=+b.dataset.i;
+    if(k==='D'){const tr=hand.querySelector('.track');tr.scrollTo({left:b.offsetLeft+b.offsetWidth/2-tr.clientWidth/2,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});select(f,i);return}
+    select(f,f.sel===i?null:i)});
+  select(f,k==='D'?0:(f.sel!=null&&f.sel<N?f.sel:null));
+  const h=Math.round(f.phone.querySelector('.tl').getBoundingClientRect().height/scaleOf(f));
+  if(k==='A')BASE_TL[N]=h;
+  const base=BASE_TL[N],diff=base!=null?h-base:0;
+  f.measure.innerHTML=`年表に使える高さ：<b>${h}px</b>${k==='A'?'（今のまま）':`（今より ${diff>0?'+':''}${diff}px）`}`;
+}
+function scaleOf(f){return Math.min(1,f.fit.clientWidth/375)}
+function fit(){frames.forEach(f=>{const s=scaleOf(f);f.phone.style.transform=`scale(${s})`;f.fit.style.height=(667*s)+'px'})}
+OPTS.forEach(o=>build(o));fit();frames.forEach(render);
+addEventListener('resize',()=>{fit()});
+document.querySelectorAll('.bar .chip').forEach(b=>b.addEventListener('click',()=>{N=+b.dataset.n;
+  document.querySelectorAll('.bar .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));frames.forEach(f=>{f.sel=null;render(f)})}));
+})();
+</script>
