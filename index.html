@@ -142,6 +142,14 @@ input::placeholder{color:var(--ph)}
 .panel .res{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;font-weight:700}
 .panel.ok .res{color:var(--ok)}.panel.ng .res{color:var(--ng)}
 .panel .res small{font-size:12px}
+.slot.gs{border-color:var(--sub);color:var(--sub);background:transparent}
+.slot.thin.gs::before{border-top-color:var(--sub)}
+.slot.thin.gs i{background:var(--sub)}
+.tr.pre.gs{background:var(--panel);color:var(--acc);border:2px dashed var(--acc);justify-content:center;font-weight:900}
+.judge.rd{background:radial-gradient(circle at 50% 45%,rgba(61,90,254,.2),rgba(61,90,254,.06) 65%,rgba(61,90,254,0))}
+.judge.rd b{color:var(--acc)}
+.jbox .jw{display:flex;gap:14px;font-size:14px;font-weight:700;color:var(--ink);margin-top:4px}
+.jbox .gn{color:var(--sub)}.jbox .gn.hit{color:var(--acc)}
 .bgmb{position:absolute!important;right:0;top:50%;transform:translateY(-50%);border:1px solid var(--line);background:var(--panel);color:var(--sub);border-radius:99px;font-size:11px;font-weight:700;padding:2px 9px;line-height:18px;position:relative}
 .bgmb::after{content:"";position:absolute;inset:-12px -6px}
 .bgmb.on{border-color:var(--acc);color:var(--acc)}
@@ -277,7 +285,6 @@ addEventListener('click',()=>BGM.unlock(),true);
 function sfxMatch(pv,m){if(!m)return;const u=S.uid;if(!pv){if(m.phase==='bet')SFX.play('match');return}
   if(m.last&&m.last.to&&(!pv.last||pv.last.at!==m.last.at))SFX.play('ng');
   if(m.phase==='play'&&m.turn===u&&(pv.turn!==u||pv.phase!=='play'))setTimeout(()=>SFX.play('turn'),m.last&&DB.now()-m.last.at<1500?(m.last.ok||m.last.to?1000:2300):0);
-  if(m.phase==='roundEnd'&&pv.phase!=='roundEnd'&&m.rw===u)setTimeout(()=>SFX.play('round'),700);
   if(m.phase==='done'&&pv.phase!=='done')setTimeout(()=>SFX.play(m.winner===u?'win':'lose'),300)}
 
 /* ========== 置いたときの動き（はじかれる・カチッとはまる・手札から飛ぶ・年表が開く・手札が詰まる） ==========
@@ -299,14 +306,28 @@ function sparks(el,color,n){const r=el.getBoundingClientRect(),cx=r.left+r.width
   for(let i=0;i<n;i++){const a=(i/n)*Math.PI*2+.26,ex=Math.cos(a),ey=Math.sin(a),ang=a*180/Math.PI,d=14+(i%3)*5;
     const s=document.createElement('div');s.className='spark';s.style.left=(cx+ex*rx*(Math.abs(ex)>.5?1:.6))+'px';s.style.top=(cy+ey*ry)+'px';s.style.background=color;document.body.append(s);ANIM.els.add(s);
     s.animate([{transform:`translate(-50%,-50%) rotate(${ang}deg) translateX(0) scaleX(.4)`,opacity:1},{transform:`translate(-50%,-50%) rotate(${ang}deg) translateX(${d}px) scaleX(1)`,opacity:0}],{duration:480,easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'}).finished.then(()=>{s.remove();ANIM.els.delete(s)},()=>{})}}
+/* ========== 相手の番の「予想」と、自分の成績（勝ち負けやジェムには関係しない） ========== */
+function fitsAt(L,g,y){return(g===0||CARDS[L[g-1]].year<=y)&&(g>=L.length||y<=CARDS[L[g]].year)}
+function noteMove(pv,m){const l=m.last;S.stat=S.stat||{ok:0,n:0,gh:0,gn:0};
+  if(l.u===S.uid){S.stat.n++;if(l.ok)S.stat.ok++;return}
+  if(S.guess!=null&&pv){const hit=fitsAt(pv.line,S.guess,CARDS[l.c].year);S.stat.gn++;if(hit)S.stat.gh++;S.gRes={at:l.at,hit}}else S.gRes=null}
+function guessNote(l){return l&&l.u!==S.uid&&S.gRes&&S.gRes.at===l.at?(S.gRes.hit?'予想 的中！':'予想 はずれ'):''}
+// 1本ごとの結果を画面いっぱいに出す
+function showRound(m,delay){const u=S.uid,o=other(m,u),w=m.rw,oppN=esc(m.names[o]);
+  const why=w==='draw'?(m.line.length>=RULE.lineMax?'場が15枚になった':'両方とも出し切った'):(w===u?'先に手札を0枚にした':oppN+'が先に手札を0枚にした');
+  setTimeout(()=>{if(!S.match||S.match.phase!=='roundEnd')return;const d=document.createElement('div');d.className='judge '+(w==='draw'?'rd':w===u?'ok':'ng');
+    d.innerHTML=`<div class="jbox"><small>${m.round}本目</small><b>${w==='draw'?'引き分け':w===u?'あなたの勝ち':oppN+'の勝ち'}</b><small>${why}</small><div class="jw"><span>あなた ${m.wins[u]}本</span><span>${oppN} ${m.wins[o]}本</span></div></div>`;
+    document.body.append(d);SFX.play(w===u?'round':'tap');
+    d.querySelector('.jbox').animate([{transform:'scale(.8)',opacity:0},{transform:'none',opacity:1}],{duration:240,easing:'ease-out'});
+    d.animate([{opacity:0},{opacity:1,offset:.1},{opacity:1,offset:.8},{opacity:0}],{duration:1900,fill:'forwards'}).finished.then(()=>d.remove(),()=>d.remove())},delay||0)}
 // 正解・不正解を画面いっぱいに出す（さわる操作はじゃましない）
-function showJudge(ok,mine,dur){const d=document.createElement('div');d.className='judge '+(ok?'ok':'ng');
-  d.innerHTML=`<div class="jbox"><svg viewBox="0 0 120 120" aria-hidden="true">${ok?'<circle cx="60" cy="60" r="44" pathLength="1"/>':'<path d="M34 34 L86 86" pathLength="1"/><path d="M86 34 L34 86" pathLength="1"/>'}</svg><b>${ok?'正解！':'ざんねん…'}</b>${mine?'':'<small>相手の答え</small>'}</div>`;
+function showJudge(ok,mine,dur,note){const d=document.createElement('div');d.className='judge '+(ok?'ok':'ng');
+  d.innerHTML=`<div class="jbox"><svg viewBox="0 0 120 120" aria-hidden="true">${ok?'<circle cx="60" cy="60" r="44" pathLength="1"/>':'<path d="M34 34 L86 86" pathLength="1"/><path d="M86 34 L34 86" pathLength="1"/>'}</svg><b>${ok?'正解！':'ざんねん…'}</b>${mine?'':'<small>相手の答え</small>'}${note?`<small class="gn ${note.includes('的中')?'hit':''}">${note}</small>`:''}</div>`;
   document.body.append(d);const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(!still){d.querySelectorAll('circle,path').forEach((p,i)=>{p.style.strokeDasharray='1';p.animate([{strokeDashoffset:1},{strokeDashoffset:0}],{duration:ok?320:180,delay:80+i*150,easing:'ease-out',fill:'backwards'})});
     d.querySelector('.jbox').animate([{transform:'scale(.7)',opacity:0},{transform:'scale(1.04)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:260,easing:'ease-out'})}
   d.animate([{opacity:0},{opacity:1,offset:.12},{opacity:1,offset:.75},{opacity:0}],{duration:dur,fill:'forwards'}).finished.then(()=>d.remove(),()=>d.remove())}
-async function animPlace(snap,m){const l=m.last,fallback=()=>{SFX.play(l.ok?'ok':'ng');showJudge(l.ok,l.u===S.uid,1100)};
+async function animPlace(snap,m){const l=m.last,fallback=()=>{SFX.play(l.ok?'ok':'ng');showJudge(l.ok,l.u===S.uid,1300,guessNote(l))};
   const tl=app.querySelector('.tl'),nr=tl&&tl.querySelector(`.tr[data-k="${l.c}"]`);
   if(!snap||!nr||!nr.animate||matchMedia('(prefers-reduced-motion: reduce)').matches)return fallback();
   const gen=ANIM.gen,alive=()=>gen===ANIM.gen,bounce=!l.ok&&l.g!=null;
@@ -329,7 +350,7 @@ async function animPlace(snap,m){const l=m.last,fallback=()=>{SFX.play(l.ok?'ok'
     if(l.ok){
       // カチッとはまる
       nr.classList.add('ok');const okc=tok('--ok'),y=nr.querySelector('.y');
-      setTimeout(()=>{if(alive()){SFX.play('snap');sparks(nr,okc,12)}},150);showJudge(true,l.u===S.uid,1150);
+      setTimeout(()=>{if(alive()){SFX.play('snap');sparks(nr,okc,12)}},150);showJudge(true,l.u===S.uid,guessNote(l)?1400:1150,guessNote(l));
       await Promise.all([
         nr.animate([{transform:'translateY(-14px) scale(1.18)'},{transform:'translateY(2px) scale(.93)',offset:.5},{transform:'translateY(-1px) scale(1.02)',offset:.78},{transform:'none'}],{duration:440,easing:'cubic-bezier(.3,.7,.3,1)'}).finished,
         nr.animate([{boxShadow:`0 0 0 0 ${okc}`},{boxShadow:'0 0 0 18px transparent'}],{duration:650,delay:140,easing:'ease-out'}).finished,
@@ -337,7 +358,7 @@ async function animPlace(snap,m){const l=m.last,fallback=()=>{SFX.play(l.ok?'ok'
         y?y.animate([{transform:'none'},{transform:'scale(1.45)',offset:.4},{transform:'none'}],{duration:420,delay:140,easing:'ease-out'}).finished:null,
         nudge(nr.previousElementSibling,-7,300,140),nudge(nr.nextElementSibling,7,300,140)]);
       return}
-    nr.classList.add('ng');showJudge(false,l.u===S.uid,bounce?850:1100);
+    nr.classList.add('ng');showJudge(false,l.u===S.uid,bounce?(guessNote(l)?1100:850):1100,guessNote(l));
     if(!bounce){SFX.play('ng');return}
     // はじかれる：前後に押し返されて外へ出て、正しい場所に収まる
     SFX.play('bump');const ngc=tok('--ng');
@@ -476,9 +497,9 @@ function onAssign(a){
   S.assign=a;
   if(!a){munsubs.forEach(f=>f());munsubs=[];S.mid=null;S.match=null;S.rev=null;return render()}
   if(a.mid===S.mid)return;
-  munsubs.forEach(f=>f());munsubs=[];S.mid=a.mid;S.match=null;S.rev=null;S.betNote=false;S.waiting=false;S.sel=null;S.oppSeen=DB.now();
+  munsubs.forEach(f=>f());munsubs=[];S.mid=a.mid;S.match=null;S.rev=null;S.betNote=false;S.waiting=false;S.sel=null;S.oppSeen=DB.now();S.guess=null;S.gRes=null;S.stat={ok:0,n:0,gh:0,gn:0};
   DB.update(R()+'/players/'+S.uid,{st:'play'});
-  munsubs.push(DB.on(mpath(),m=>{const pv=S.match;S.match=m?norm(m):null;const nl=pv&&S.match&&S.match.last&&!S.match.last.to&&(!pv.last||pv.last.at!==S.match.last.at),snap=nl?animSnap(S.match):null;sfxMatch(pv,S.match);if(pv&&S.match&&S.match.phase==='bet'&&pv.ok[S.uid]&&!S.match.ok[S.uid]&&pv.bet[S.uid]===S.match.bet[S.uid])S.betNote=true;if(S.match){if(S.match.turnStart!==lastTurnStart){lastTurnStart=S.match.turnStart;S.sel=null}if(S.match.phase==='done'||S.match.phase==='void')settle()}render();if(nl)animPlace(snap,S.match)}));
+  munsubs.push(DB.on(mpath(),m=>{const pv=S.match;S.match=m?norm(m):null;const nl=pv&&S.match&&S.match.last&&!S.match.last.to&&(!pv.last||pv.last.at!==S.match.last.at),snap=nl?animSnap(S.match):null;if(nl)noteMove(pv,S.match);if(pv&&S.match&&S.match.pick!==pv.pick)S.guess=null;sfxMatch(pv,S.match);if(pv&&S.match&&S.match.phase==='bet'&&pv.ok[S.uid]&&!S.match.ok[S.uid]&&pv.bet[S.uid]===S.match.bet[S.uid])S.betNote=true;if(S.match){if(S.match.turnStart!==lastTurnStart){lastTurnStart=S.match.turnStart;S.sel=null;S.guess=null}if(pv&&pv.phase==='play'&&S.match.phase==='roundEnd')showRound(S.match,nl&&S.match.last&&!S.match.last.ok?2300:1700);if(S.match.phase==='done'||S.match.phase==='void')settle()}render();if(nl)animPlace(snap,S.match)}));
   munsubs.push(DB.on(R()+'/seen/'+a.opp,v=>{if(v)S.oppSeen=v}));
   render();
 }
@@ -542,15 +563,15 @@ function dots(n){return '<span class="dots">'+Array.from({length:RULE.winsNeeded
 function vPlay(m){const u=S.uid,o=other(m,u),on=m.phase==='play',mine=m.turn===u&&on,hand=m.hands[u],now=DB.now(),oppN=esc(m.names[o]);
   const since=m.last?now-m.last.at:1e9,lock=on&&since<LOCK,fb=on&&since<FB&&!m.pick;
   let panel;
-  if(m.phase==='roundEnd'){const w=m.rw;panel=`<div class="panel ${w==='draw'?'':w===u?'ok':'ng'}"><div class="ttl">${m.round}本目は${w==='draw'?'引き分け':w===u?'あなたの勝ち！':oppN+'の勝ち'}</div><div class="txt">先に2本とった方が勝ち（いま あなた ${m.wins[u]}本・${oppN} ${m.wins[o]}本）</div><div class="who" id="rg"></div></div>`}
+  if(m.phase==='roundEnd'){const w=m.rw;panel=`<div class="panel ${w==='draw'?'':w===u?'ok':'ng'}"><div class="ttl">${m.round}本目は${w==='draw'?'引き分け':w===u?'あなたの勝ち！':oppN+'の勝ち'}</div><div class="txt">${w==='draw'?(m.line.length>=RULE.lineMax?'場が15枚になったので引き分け。':'両方とも出し切ったので引き分け。'):''}先に2本とった方が勝ち（いま あなた ${m.wins[u]}本・${oppN} ${m.wins[o]}本）</div><div class="who" id="rg"></div></div>`}
   else if(fb){const l=m.last,who=l.u===u?'あなた':oppN;
     if(l.to)panel=`<div class="panel ng"><div class="ttl v"><span>${who}：時間切れ</span><small>手札が1枚ふえた</small></div></div>`;
-    else{const c=CARDS[l.c];panel=`<div class="panel ${l.ok?'ok':'ng'}"><div class="res"><span>${who}の答え：${l.ok?'正解':'不正解'}</span>${l.ok?'':'<small>手札が1枚ふえた</small>'}</div><div class="ans"><span class="yr mono">${c.year}年</span>${esc(c.title)}</div>${goro(c)||`<div class="txt">${esc(c.text)}</div>`}</div>`}}
-  else if(m.pick){const c=CARDS[m.pick];panel=mine?`<div class="panel ask"><div class="who">年の古い順にならべよう</div><div class="ttl">「${esc(c.title)}」はどこに入る？</div><div class="txt">${esc(c.text)}</div></div>`:`<div class="panel"><div class="who">${oppN}が出すカード。どこに入るか考えてみよう</div><div class="ttl">${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>`}
+    else{const c=CARDS[l.c];panel=`<div class="panel ${l.ok?'ok':'ng'}"><div class="res"><span>${who}の答え：${l.ok?'正解':'不正解'}</span><small>${guessNote(l)||(l.ok?'':'手札が1枚ふえた')}</small></div><div class="ans"><span class="yr mono">${c.year}年</span>${esc(c.title)}</div>${goro(c)||`<div class="txt">${esc(c.text)}</div>`}</div>`}}
+  else if(m.pick){const c=CARDS[m.pick];panel=mine?`<div class="panel ask"><div class="who">年の古い順にならべよう</div><div class="ttl">「${esc(c.title)}」はどこに入る？</div><div class="txt">${esc(c.text)}</div></div>`:`<div class="panel ${S.guess==null?'ask':''}"><div class="who">${S.guess==null?`${oppN}が出すカード。どこに入るか予想しよう（？をタップ）`:`${oppN}が出すカード。予想したよ。答えを待とう`}</div><div class="ttl">${esc(c.title)}</div><div class="txt">${esc(c.text)}</div></div>`}
   else panel=`<div class="panel ${mine?'ask':''}"><div class="ttl center">${mine?'あなたの番<br>出すカードを1枚えらぼう':oppN+'が考え中…'}</div></div>`;
   const canPick=mine&&!lock,placing=canPick&&!!m.pick,L=m.line;let tl='';S.compact=L.length>=RULE.compactAt;
-  const thin=placing&&L.length>=RULE.thinAt;
-  const slot=g=>!placing?'':S.sel===g?(RULE.drag?`<button class="tr pre dp" data-act="confirmgap"><span class="t">${esc(CARDS[m.pick].title)}</span><small>ここに置く？</small></button>`:`<button class="tr pre" data-act="confirmgap">ここに置く（もう一度タップで決定）</button>`):thin?`<button class="slot thin" data-act="gap" data-g="${g}" aria-label="ここに置く"><i>＋</i></button>`:`<button class="slot" data-act="gap" data-g="${g}">＋ ここ？</button>`;
+  const guessing=on&&!mine&&!!m.pick&&!lock,thin=(placing||guessing)&&L.length>=RULE.thinAt;
+  const slot=g=>guessing?(S.guess===g?`<button class="tr pre gs" data-act="guess" data-g="${g}">あなたの予想：ここ</button>`:thin?`<button class="slot thin gs" data-act="guess" data-g="${g}" aria-label="ここと予想"><i>？</i></button>`:`<button class="slot gs" data-act="guess" data-g="${g}">？ ここかな</button>`):!placing?'':S.sel===g?(RULE.drag?`<button class="tr pre dp" data-act="confirmgap"><span class="t">${esc(CARDS[m.pick].title)}</span><small>ここに置く？</small></button>`:`<button class="tr pre" data-act="confirmgap">ここに置く（もう一度タップで決定）</button>`):thin?`<button class="slot thin" data-act="gap" data-g="${g}" aria-label="ここに置く"><i>＋</i></button>`:`<button class="slot" data-act="gap" data-g="${g}">＋ ここ？</button>`;
   L.forEach((id,i)=>{const c=CARDS[id],cls=m.last&&m.last.c===id?(m.last.ok?'ok':'ng'):'';tl+=slot(i)+`<div class="tr ${cls}" data-k="${id}" ${placing?`data-act="rowgap" data-i="${i}"`:''}><span class="y mono">${c.year}</span><span class="t">${esc(c.title)}</span></div>`});tl+=slot(L.length);
   const cols=Math.max(3,hand.length);
   return `<div class="race"><div class="${mine?'act':''}"><span>あなた<em>${m.wins[u]}本</em></span><b>あと${hand.length}枚</b></div><div class="${on&&!mine?'act':''}"><span>${oppN}<em>${m.wins[o]}本</em></span><b>あと${m.hands[o].length}枚</b></div></div>
@@ -565,15 +586,16 @@ function vResult(m){const u=S.uid,o=other(m,u),p=me()||{},v=m.phase==='void',win
   if(!S.rev)S.rev={q:miss.map(c=>c.id),re:{},i:0,inp:'',shown:false,ok:false,right:0,skip:false};const r=S.rev,reviewing=!v&&!r.skip&&r.i<r.q.length;
   const head=`<div class="card rescard"><div><div class="res ${v?'':win?'win':'lose'}">${v?'無効試合':win?'勝ち':'負け'}</div><div class="sub">${v?'相手の接続が切れました':`vs ${esc(m.names[o])}　${m.wins[u]} − ${m.wins[o]}`}</div></div>
   ${v?'<div class="sub">ジェムはそのまま</div>':`<div class="gem" style="font-size:20px;text-align:right">💎 ${win?'+'+m.bet[o]:'−'+m.bet[u]}<div class="sub">${done?'いま '+(p.g||0)+'個':''}</div></div>`}</div>`;
+  const stat=S.stat&&S.stat.n&&!v?`<div class="sub center">置いたカード ${S.stat.n}枚中 <b>${S.stat.ok}枚正解</b>${S.stat.gn?`　予想 ${S.stat.gn}回中 <b>${S.stat.gh}回的中</b>`:''}</div>`:'';
   if(reviewing){const c=CARDS[r.q[r.i]],again=r.re[c.id]===r.i;
-    return `${head}<div class="label">復習：まちがえたカードをもう一度（${r.i+1}/${r.q.length}）</div>
+    return `${head}${stat}<div class="label">復習：まちがえたカードをもう一度（${r.i+1}/${r.q.length}）</div>
     <div class="panel rv ${r.shown?(r.ok?'ok':'ng'):'ask'}"><div class="who">${r.shown?(r.ok?'正解！':'正しくは '+c.year+'年'+(r.inp?'（あなたの答え：'+esc(r.inp)+'年）':'')+(again?'　あとでもう一度出ます':'')):'これは何年のできごと？'}</div><div class="ttl">${r.shown?`<span class="yr mono">${c.year}年</span>`:''}${esc(c.title)}</div><div class="txt">${esc(c.text)}</div>${r.shown?goro(c):''}</div>
     ${r.shown?`<div class="grow"></div><button class="btn" data-act="revnext">${r.i+1<r.q.length?'次のカードへ':'おわり'}</button>`:
     `<div class="yin mono">${r.inp?esc(r.inp)+'<i>年</i>':'<span class="ph">年号を数字で入れよう</span>'}</div><div class="grow"></div>
     <div class="keys">${[1,2,3,4,5,6,7,8,9].map(k=>`<button data-act="key" data-k="${k}">${k}</button>`).join('')}<button data-act="key" data-k="del">⌫</button><button data-act="key" data-k="0">0</button><button class="go" data-act="key" data-k="go" ${r.inp.length>=3?'':'disabled'}>答える</button></div>
     <div class="row" style="justify-content:space-between"><button class="btn ghost sm" data-act="revdk">わからない（答えを見る）</button><button class="link" data-act="revskip">とばす</button></div>`}`}
   const show=miss.slice(0,12),more=miss.length-show.length;
-  return `${head}<div class="label">${miss.length&&!r.skip?'復習おわり　'+r.right+' / '+r.q.length+' 問正解':'まちがえたカード'}</div>
+  return `${head}${stat}<div class="label">${miss.length&&!r.skip?'復習おわり　'+r.right+' / '+r.q.length+' 問正解':'まちがえたカード'}</div>
   <div class="grow">${miss.length?`<div class="miss">${show.map(c=>`<div><b class="mono">${c.year}</b>${esc(c.title)}</div>`).join('')}</div>${more>0?`<div class="sub" style="margin-top:6px">ほか ${more}枚</div>`:''}`:'<div class="sub">'+(v?'':'まちがいなし')+'</div>'}</div>
   <button class="btn" data-act="leave">部屋に戻る</button>`}
 function vTeacher(){const r=ranked(),now=DB.now(),stt={play:'対戦中',wait:'対戦待ち',idle:'待機'};
@@ -606,7 +628,7 @@ function tick(){
 
 /* ========== 操作 ========== */
 app.addEventListener('click',e=>{if(Date.now()-dragEnd<300)return;const t=e.target.closest('[data-act]');if(!t||t.disabled)return;const a=t.dataset.act,m=S.match;
-  if(a==='pick')SFX.play('pick');else if(a==='gap'||a==='rowgap')SFX.play('sel');else if(a!=='key'&&a!=='sfx'&&a!=='confirmgap')SFX.play('tap');
+  if(a==='pick')SFX.play('pick');else if(a==='gap'||a==='rowgap'||a==='guess')SFX.play('sel');else if(a!=='key'&&a!=='sfx'&&a!=='confirmgap')SFX.play('tap');
   if(a==='sfx'){SFX.toggle();S.homeDirty=true;render();return}
   if(a==='bgm'){BGM.toggle();S.homeDirty=true;lastHtml='';render();return}
   if(a==='join')joinRoom().catch(()=>homeErr('通信できませんでした'));
@@ -618,6 +640,7 @@ app.addEventListener('click',e=>{if(Date.now()-dragEnd<300)return;const t=e.targ
   else if(a==='gap'){S.sel=Number(t.dataset.g);render()}
   else if(a==='rowgap'){const r=t.getBoundingClientRect(),i=Number(t.dataset.i);S.sel=(e.clientY-r.top<r.height/2)?i:i+1;render()}
   else if(a==='cancelgap'){S.sel=null;render()}
+  else if(a==='guess'){const g=Number(t.dataset.g);S.guess=S.guess===g?null:g;render()}
   else if(a==='confirmgap'){if(S.sel!=null&&m.pick)place(S.sel)}
   else if(a==='key'){const r=S.rev,k=t.dataset.k;if(!r)return;if(k!=='go')SFX.play('tap');if(k==='del')r.inp=r.inp.slice(0,-1);else if(k==='go'){const c=CARDS[r.q[r.i]];r.ok=Number(r.inp)===c.year;if(r.ok)r.right++;else revAgain(r,c.id);r.shown=true;SFX.play(r.ok?'ok':'ng')}else if(r.inp.length<4)r.inp+=k;render()}
   else if(a==='revnext'){const r=S.rev;r.i++;r.inp='';r.shown=false;render()}
