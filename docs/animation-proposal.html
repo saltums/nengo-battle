@@ -74,7 +74,7 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--acc);outli
 .stage .row.ok .y{color:var(--ok);font-weight:700}
 .stage .row.ng{border:2px solid var(--ng);background:var(--ngd)}
 .stage .row.ng .y{color:var(--ng);font-weight:700}
-.stage .row.lift{z-index:3;box-shadow:0 6px 16px var(--shadow)}
+.stage .row.float{position:absolute;z-index:5;margin:0;box-shadow:0 8px 20px var(--shadow);background:linear-gradient(var(--ngd),var(--ngd)),var(--panel);pointer-events:none}
 .stage .slot{flex:none;height:28px;border:1.5px dashed var(--acc);border-radius:8px;background:var(--accd);color:var(--acc);font-size:12.5px;font-weight:700;line-height:1;padding:0}
 .stage .slot.pre{background:var(--acc);color:var(--onacc);border-style:solid;height:32px}
 .stage .hand{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;height:64px;margin-top:4px}
@@ -143,6 +143,13 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--acc);outli
           <button class="chip" type="button" data-s="2.5" aria-pressed="false">ゆっくり（確認用）</button>
         </div>
       </div>
+      <div>
+        <h3>音（「カチッ」と「コツン」）</h3>
+        <div class="row-btns" id="sound">
+          <button class="chip" type="button" data-v="1" aria-pressed="true">オン</button>
+          <button class="chip" type="button" data-v="0" aria-pressed="false">オフ</button>
+        </div>
+      </div>
       <div class="row-btns">
         <button class="chip main" type="button" id="resetLive">年表を最初にもどす</button>
       </div>
@@ -158,14 +165,14 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--acc);outli
   <section class="two" aria-label="まとめ">
     <div class="box2">
       <h2>おすすめの組み合わせ</h2>
-      <p><b>A 手札から飛ぶ ＋ B 年表が開く ＋ D 正しい場所へすべる ＋ F 手札が詰まる・1枚引く</b></p>
-      <p class="sub">どれも「何が起きたか」を伝える動きで、待ち時間はほとんど増えません。1手にかかる時間は、正解でおよそ0.5秒、不正解でおよそ2秒です。CとEは学びには効きますが、1手ごとの間が少し長くなるので、先生に触ってもらってから決めるのがよさそうです。</p>
+      <p><b>A はじかれる ＋ B カチッとはまる ＋ C 手札から飛ぶ ＋ D 年表が開く ＋ E 手札が詰まる・1枚引く</b></p>
+      <p class="sub">AとBで、正解と不正解が色だけでなく手ごたえで分かるようになります。C〜Eは何が起きたかを目で追うための動きです。1手にかかる時間は、正解でおよそ0.8秒、不正解でおよそ2.5秒です。FとGは学びには効きますが、1手ごとの間が少し長くなるので、先生に触ってもらってから決めるのがよさそうです。</p>
     </div>
     <div class="box2">
       <h2>入れない方がよいもの</h2>
       <ul>
         <li>紙吹雪やキラキラ、大きな「すごい！」の文字（子どもっぽくなる）</li>
-        <li>画面全体が揺れる・点滅する演出（あせらせる）</li>
+        <li>画面全体が揺れる・点滅する演出、大きなブザー音（あせらせる）</li>
         <li>連続正解をあおる表示（早押しと同じで逆効果）</li>
         <li>1秒を超えて操作を止める長い演出（クラス全員の対戦のテンポが落ちる）</li>
       </ul>
@@ -173,7 +180,7 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--acc);outli
     <div class="box2">
       <h2>決めてほしいこと</h2>
       <ol>
-        <li>どの案を入れるか（A〜Gから）</li>
+        <li>どの案を入れるか（A〜Gから）。はじかれる・はまるの強さ（もっと強く／弱く）も</li>
         <li>相手の画面でも同じ動きを見せるか（おすすめ：見せる。相手の番も「どこに入るか考える」時間になる）</li>
         <li>動いている間は持ち時間30秒を止めるか（おすすめ：止める）</li>
         <li>効果音を動きの終わりに合わせるか（今は置いた瞬間に鳴る）</li>
@@ -191,7 +198,13 @@ const CARDS={
 };
 const LINE=['taika','heian','jokyu','onin','seki'];
 const OPTS=[
-  {k:'fly',  n:'手札から飛んでいく', s:'選んだカードが年表の置いた場所まで動く', badge:'rec', time:'約0.4秒',
+  {k:'bounce',n:'違うとはじかれる', s:'合わない場所に入れると押し返され、正しい場所へ', badge:'rec', time:'約1.3秒',
+   what:'間違えた場所に入れようとすると、前後のカードに押し返されて年表の外へはじき出されます。年号が見えたあと、正しい場所までふわっと移って収まります。',
+   why:'「そこには入らない」が手ごたえで伝わり、そのあと正しい場所を目で追えます（間違えた直後に正解を見せる）。音も「コツン」と低く短くして、あせらせないようにします。', demo:['dan',1]},
+  {k:'snap', n:'正解はカチッとはまる', s:'すき間に吸いこまれ、前後を少し押して収まる', badge:'rec', time:'約0.35秒',
+   what:'正しい場所では、カードが少し大きめに入ってきて、すき間にぴたりと収まります。前後のカードがわずかに押されて戻り、緑のふちが1回だけ広がって消えます。',
+   why:'当たったときの気持ちよさが、次も考えて置こうという気持ちにつながります。光や文字で大げさにせず、「はまった感触」だけで伝えます。', demo:['teppo',4]},
+  {k:'fly', n:'手札から飛んでいく', s:'選んだカードが年表の置いた場所まで動く', badge:'rec', time:'約0.4秒',
    what:'手札のカードが、置いた場所まで飛んでいって年表に入ります。',
    why:'どのカードをどこに置いたかが一目で分かります。相手の画面でも「相手が何を出したか」を追えます。', demo:['teppo',4]},
   {k:'open', n:'年表がすっと開く', s:'前後のカードが上下に分かれて場所ができる', badge:'rec', time:'約0.3秒（Aと同時）',
@@ -200,20 +213,14 @@ const OPTS=[
   {k:'flip', n:'年号をめくって答え合わせ', s:'置いた直後は「？」、めくると年号が出る', badge:'', time:'約0.5秒ふえる',
    what:'置いた直後は年号が「？」のまま。ひと呼吸おいて、年号がくるっとめくれて正解か不正解かが分かります。',
    why:'「たぶん何年だ」と思い出してから確かめる間ができます（思い出す練習が記憶に効く）。そのぶん1手が少し長くなります。', demo:['teppo',4]},
-  {k:'slide',n:'正しい場所へすべる', s:'不正解のカードが正しい場所まで動く', badge:'rec', time:'約0.6秒',
-   what:'間違えた場所にいったん入ったあと、正しい場所まですべって移動します。今は一瞬で入れかわります。',
-   why:'どこが正しかったかを、動きで見せられます（間違えた直後に正解を見せる）。引き継ぎメモで「まだやっていないこと」に入っていたものです。', demo:['dan',1]},
   {k:'gaps', n:'前後との年の差を見せる', s:'入った場所の上下に「○年」と出る', badge:'', time:'約2秒表示（操作は止めない）',
    what:'カードが正しい場所に入ったあと、上下のカードとのあいだに「76年」「57年」のような年の差が少しのあいだ出ます。',
    why:'出来事どうしの間隔の感覚がつき、時代のつながりで覚えやすくなります。情報が増えるので、うるさく感じないかは確認が必要です。', demo:['teppo',4]},
   {k:'hand', n:'手札が詰まる・1枚引く', s:'手札が減る・増えるのが分かる', badge:'rec', time:'約0.3秒',
    what:'出したカードのあとが左に詰まります。不正解のときは、新しいカードが上からすっと手札に入ります。',
    why:'「あと何枚」が増えた・減ったことに気づきやすくなります。', demo:['dan',1]},
-  {k:'shake',n:'不正解で小さく揺れる', s:'間違えたカードだけ1回だけ小さく揺れる', badge:'low', time:'約0.3秒',
-   what:'不正解のカードだけが、左右に小さく1回揺れます。画面全体は揺らしません。',
-   why:'色だけより不正解が伝わりやすくなります。ただ、強くするとあせらせる演出になるので、入れるならこの程度までです。', demo:['dan',1]},
 ];
-const PRESET={none:[],rec:['fly','open','slide','hand'],all:OPTS.map(o=>o.k)};
+const PRESET={none:[],rec:['bounce','snap','fly','open','hand'],all:OPTS.map(o=>o.k)};
 const BADGE={rec:'おすすめ','':'検討',low:'入れるなら控えめに'};
 
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
@@ -225,9 +232,20 @@ const EASE='cubic-bezier(.2,.7,.2,1)';
 const rects=els=>{const m=new Map;els.forEach(e=>m.set(e,e.getBoundingClientRect()));return m};
 const flip=(els,before,dur,ease)=>Promise.all(els.map(e=>{const a=before.get(e);if(!a||!e.isConnected)return;const b=e.getBoundingClientRect();const dx=a.left-b.left,dy=a.top-b.top;if(!dx&&!dy)return;return e.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:dur,easing:ease||EASE}).finished}));
 
+// その場で作る効果音（アプリの効果音と同じ作り方）
+const SND={on:true,ctx:null,
+  ac(){if(!this.on)return null;try{this.ctx=this.ctx||new (window.AudioContext||window.webkitAudioContext)();if(this.ctx.state==='suspended')this.ctx.resume();return this.ctx}catch(e){return null}},
+  tone(f1,f2,dur,type,vol,delay){const a=this.ac();if(!a)return;const t=a.currentTime+(delay||0),o=a.createOscillator(),g=a.createGain();
+    o.type=type;o.frequency.setValueAtTime(f1,t);o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.006);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+0.03)},
+  snap(){this.tone(2600,1300,0.025,'square',0.04);this.tone(1318.5,1318.5,0.18,'sine',0.11,0.03)},
+  bump(){this.tone(190,105,0.15,'sine',0.28);this.tone(420,300,0.04,'triangle',0.05)}
+};
+
 class Stage{
   constructor(root,cfg){
-    this.root=root;this.cfg=cfg;this.interactive=!!cfg.interactive;this.getOpts=cfg.opts;
+    this.root=root;this.cfg=cfg;this.interactive=!!cfg.interactive;this.getOpts=cfg.opts;this.soundOK=this.interactive;
     root.innerHTML='<div class="msg"></div><div class="dir">▲ むかし（年が古い）</div><div class="tl"></div><div class="dir">▼ さいきん（年が新しい）</div><div class="hand"></div>';
     this.msg=root.querySelector('.msg');this.tl=root.querySelector('.tl');this.hd=root.querySelector('.hand');
     if(this.interactive)root.addEventListener('click',e=>this.onClick(e));
@@ -264,8 +282,9 @@ class Stage{
       if(this.sel)this.setMsg(`「${CARDS[k].t}」はどこに入る？`,'ask');else this.setMsg('手札から1枚えらぼう','ask')}
     else if(t.dataset.g!=null){const g=+t.dataset.g;if(this.gap===g)this.place(this.sel,g);else{this.gap=g;this.renderTL()}}
   }
-  async demo(k,g){
-    this.reset();const run=this.run;
+  snd(name){if(this.soundOK)SND[name]()}
+  async demo(k,g,withSound){
+    this.reset();const run=this.run;this.soundOK=!!withSound;
     await sleep(W(500));if(run!==this.run)return;
     this.sel=k;this.renderHand();this.setMsg(`「${CARDS[k].t}」はどこに入る？`,'ask');
     await sleep(W(600));if(run!==this.run)return;
@@ -313,13 +332,48 @@ class Stage{
     }
     nr.classList.add(ok?'ok':'ng');
     this.setMsg(ok?`正解！ ${c.t}は${c.y}年`:`ざんねん… ${c.t}は${c.y}年`,ok?'ok':'ng');
+    const nb=d=>{const id=L[L.indexOf(k)+d];return id?this.tl.querySelector(`[data-k="${id}"]`):null};
+    const nudge=(el,px,dur,delay)=>el?el.animate([{transform:'none'},{transform:`translateY(${px}px)`,offset:.45},{transform:'none'}],{duration:dur,delay:delay||0,easing:'ease-out'}).finished:null;
+    if(ok&&o.snap){
+      // すき間に吸いこまれて、前後を少し押して収まる
+      const okc=getComputedStyle(this.root).getPropertyValue('--ok').trim();
+      setTimeout(()=>this.snd('snap'),T(140));
+      await Promise.all([
+        nr.animate([{transform:'translateY(-6px) scale(1.07)'},{transform:'translateY(1px) scale(.97)',offset:.55},{transform:'none'}],{duration:T(340),easing:'cubic-bezier(.3,.7,.3,1)'}).finished,
+        nr.animate([{boxShadow:`0 0 0 0 ${okc}`},{boxShadow:'0 0 0 9px transparent'}],{duration:T(520),delay:T(140),easing:'ease-out'}).finished,
+        nudge(nb(-1),-3,T(240),T(140)),nudge(nb(1),3,T(240),T(140))]);
+      if(!alive())return;
+    }
     if(!ok){
-      if(o.shake)await nr.animate([{transform:'none'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-3px)'},{transform:'none'}],{duration:T(320),easing:'ease-in-out'}).finished;
-      await sleep(W(o.slide?500:0));if(!alive())return;
-      L.splice(L.indexOf(k),1);let cg=L.findIndex(x=>CARDS[x].y>c.y);if(cg<0)cg=L.length;L.splice(cg,0,k);
-      const rs=[...this.tl.children],bf=rects(rs),rest=rs.filter(r=>r!==nr);
-      this.tl.insertBefore(nr,rest[cg]||null);
-      if(o.slide){nr.classList.add('lift');await flip(rs,bf,T(620),'cubic-bezier(.45,0,.2,1)');nr.classList.remove('lift')}
+      L.splice(L.indexOf(k),1);let cg=L.findIndex(x=>CARDS[x].y>c.y);if(cg<0)cg=L.length;
+      if(o.bounce){
+        // 前後のカードに押し返されて、外へはじき出される
+        this.snd('bump');
+        await Promise.all([
+          nr.animate([{transform:'none'},{transform:'scale(.94,.84)',offset:.5},{transform:'none'}],{duration:T(220),easing:'ease-out'}).finished,
+          nudge(this.tl.querySelector(`[data-k="${L[g-1]}"]`),3,T(220)),nudge(this.tl.querySelector(`[data-k="${L[g]}"]`),-3,T(220))]);
+        if(!alive())return;
+        const rr=this.root.getBoundingClientRect(),a=nr.getBoundingClientRect();
+        const f=nr.cloneNode(true);f.classList.add('float');
+        Object.assign(f.style,{left:(a.left-rr.left)+'px',top:(a.top-rr.top)+'px',width:a.width+'px',height:a.height+'px'});
+        this.root.append(f);
+        const out='translate(12px,-22px) rotate(-5deg) scale(.92)';
+        const rs=[...this.tl.children].filter(r=>r!==nr),bf=rects(rs);nr.remove();
+        await Promise.all([flip(rs,bf,T(300)),f.animate([{transform:'none'},{transform:out}],{duration:T(340),easing:'cubic-bezier(.2,1.5,.45,1)',fill:'forwards'}).finished]);
+        await sleep(W(600));if(!alive())return;
+        // 正しい場所へ移って収まる
+        L.splice(cg,0,k);
+        const rs2=[...this.tl.children],bf2=rects(rs2);
+        nr.style.visibility='hidden';this.tl.insertBefore(nr,rs2[cg]||null);
+        const d=nr.getBoundingClientRect();
+        await Promise.all([flip(rs2,bf2,T(380)),f.animate([{transform:out},{transform:`translate(${d.left-a.left}px,${d.top-a.top}px)`}],{duration:T(580),easing:'cubic-bezier(.45,0,.2,1)',fill:'forwards'}).finished]);
+        f.remove();nr.style.visibility='';
+        this.setMsg(`ざんねん… ${c.t}は${c.y}年。正しい場所に移した`,'ng');
+      }else{
+        L.splice(cg,0,k);
+        const rest=[...this.tl.children].filter(r=>r!==nr);
+        this.tl.insertBefore(nr,rest[cg]||null);
+      }
       if(!alive())return;
       await handMove;
       if(this.deck.length){
@@ -366,6 +420,7 @@ syncPresets();
 const liveOpts=()=>Object.fromEntries(OPTS.map(o=>[o.k,on.has(o.k)]));
 const live=new Stage(document.getElementById('live'),{interactive:true,opts:liveOpts,hand:['teppo','dan','taiho'],deck:['daibutsu','honno','insei']});
 document.getElementById('resetLive').addEventListener('click',()=>live.reset());
+document.querySelectorAll('#sound .chip').forEach(b=>b.addEventListener('click',()=>{SND.on=b.dataset.v==='1';document.querySelectorAll('#sound .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));if(SND.on)SND.snap()}));
 document.querySelectorAll('#speed .chip').forEach(b=>b.addEventListener('click',()=>{speed=+b.dataset.s;document.querySelectorAll('#speed .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
 
 // 案ごとの年表
@@ -378,7 +433,7 @@ OPTS.forEach((o,i)=>{
   propsEl.append(a);
   const st=new Stage(a.querySelector('.stage'),{opts:()=>({[o.k]:true}),hand:['teppo','dan','taiho'],deck:['daibutsu']});
   const play=()=>st.demo(...o.demo);
-  a.querySelector('.replay').addEventListener('click',play);
+  a.querySelector('.replay').addEventListener('click',()=>st.demo(...o.demo,true));
   minis.push({el:a,play,done:false});
 });
 if('IntersectionObserver' in window){
