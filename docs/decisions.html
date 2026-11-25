@@ -1,0 +1,286 @@
+<title>後から決めること</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* アプリと同じ白地に青。決めることを分類ごとに並べ、各項目に「選べる案」と「こちらのおすすめ」を置く */
+:root{
+  --page:#ffffff;--soft:#f3f5fa;--panel:#ffffff;--line:#d6dbe8;--ink:#1b2233;--ink2:#3d465c;--sub:#667089;
+  --acc:#3d5afe;--onacc:#ffffff;--accd:rgba(61,90,254,.08);--ok:#0f9d63;--okd:rgba(15,157,99,.09);--warn:#b26a00;--warnd:rgba(178,106,0,.09);
+  --font:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#10131b;--soft:#171c27;--panel:#1b2130;--line:#323a50;--ink:#e8ecf5;--ink2:#c3cad9;--sub:#939cb2;
+  --acc:#7b91ff;--onacc:#0f1320;--accd:rgba(123,145,255,.14);--ok:#3fcb8f;--okd:rgba(63,203,143,.13);--warn:#f0a83c;--warnd:rgba(240,168,60,.13);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --page:#10131b;--soft:#171c27;--panel:#1b2130;--line:#323a50;--ink:#e8ecf5;--ink2:#c3cad9;--sub:#939cb2;
+  --acc:#7b91ff;--onacc:#0f1320;--accd:rgba(123,145,255,.14);--ok:#3fcb8f;--okd:rgba(63,203,143,.13);--warn:#f0a83c;--warnd:rgba(240,168,60,.13);color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.75}
+.wrap{max-width:880px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 72px;display:flex;flex-direction:column;gap:44px}
+h1{font-size:clamp(24px,5vw,32px);font-weight:900;line-height:1.35;margin:0;text-wrap:balance;word-break:auto-phrase}
+h2{font-size:20px;font-weight:900;margin:0;line-height:1.4;word-break:auto-phrase;text-wrap:balance}
+h3{font-size:16px;font-weight:900;margin:0;line-height:1.5;word-break:auto-phrase;text-wrap:balance}
+p{margin:0}
+.kicker{font-size:12px;font-weight:700;color:var(--acc);letter-spacing:.08em}
+.lead{color:var(--ink2);max-width:64ch}
+.meta{font-size:13px;color:var(--sub)}
+header{display:flex;flex-direction:column;gap:10px}
+nav ol{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+nav a{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:5px 14px;font-size:13.5px;font-weight:700;color:var(--ink);text-decoration:none;background:var(--panel)}
+nav a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+section{display:flex;flex-direction:column;gap:14px;scroll-margin-top:16px}
+.sec-head{display:flex;flex-direction:column;gap:4px;border-bottom:2px solid var(--ink);padding-bottom:8px}
+.sec-head .n{font-family:var(--mono);font-size:12px;color:var(--sub);font-weight:700}
+.items{display:flex;flex-direction:column;gap:12px}
+.item{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--panel);display:flex;flex-direction:column;gap:10px;min-width:0}
+.item .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.st{flex:none;font-size:12px;font-weight:700;border-radius:99px;padding:1px 10px;line-height:1.7;white-space:nowrap}
+.st.wait{background:var(--warnd);color:var(--warn)}
+.st.trial{background:var(--accd);color:var(--acc)}
+.st.ours{background:var(--okd);color:var(--ok)}
+.q{color:var(--ink2)}
+.opts{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.opts li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:baseline;font-size:14.5px}
+.opts li b.k{font-family:var(--mono);font-size:12px;color:var(--sub);font-weight:700}
+.opts li.rec b.k{color:var(--acc)}
+.rec-tag{font-size:12px;font-weight:700;color:var(--acc);margin-left:6px;white-space:nowrap}
+.why{font-size:13.5px;color:var(--sub);border-left:3px solid var(--line);padding-left:10px}
+.num{font-family:var(--mono);font-weight:700;color:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;color:var(--sub);font-weight:700}
+.idea{border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px;background:var(--panel)}
+.idea.pick{border:2px solid var(--acc)}
+.idea .tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:99px;padding:0 9px;line-height:1.8;color:var(--ink2)}
+.tag.good{border-color:var(--ok);color:var(--ok)}
+.tag.bad{border-color:var(--warn);color:var(--warn)}
+.pros{margin:0;padding-left:1.2em;font-size:14.5px;display:flex;flex-direction:column;gap:3px}
+.pros li.m{color:var(--sub)}
+.callout{background:var(--soft);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.callout ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">年号ならべバトル（仮）・依頼者と決めること</div>
+    <h1>後から決めることリスト</h1>
+    <p class="lead">試作を作る中で、先生に判断してもらう必要があることをまとめました。項目ごとに「選べる案」と「こちらのおすすめ」を書いています。おすすめは、テストプレイと学習ゲームの調査をもとにしていますが、決めるのは先生です。</p>
+    <p class="meta">2026年11月25日時点　｜　<span class="st wait">先生待ち</span> 判断してほしいこと　<span class="st trial">お試し中</span> お試し版で触れるもの　<span class="st ours">こちらで</span> 渡す前にこちらでやること</p>
+    <nav aria-label="目次"><ol>
+      <li><a href="#rules">ゲームのルール</a></li>
+      <li><a href="#ui">操作と見た目</a></li>
+      <li><a href="#data">カードと音</a></li>
+      <li><a href="#env">教室と配り方</a></li>
+      <li><a href="#trade">トレーディング要素</a></li>
+      <li><a href="#ours">こちらでやること</a></li>
+    </ol></nav>
+  </header>
+
+  <section id="rules" aria-labelledby="h-rules">
+    <div class="sec-head"><span class="n">1</span><h2 id="h-rules">ゲームのルール</h2></div>
+    <p class="q">計算で数千試合を回したテストプレイの結果です。生徒の覚え具合を「よく覚えている／ふつう／苦手」の3段階で考えています。</p>
+    <div class="tbl"><table>
+      <thead><tr><th>組み合わせ</th><th>1試合の長さ</th><th>引き分けになる本</th><th>得意な方の勝率</th></tr></thead>
+      <tbody>
+        <tr><td>よく覚えている同士</td><td>平均5.8本・約13分</td><td><b>6割</b>（両方出し切り）</td><td>―</td></tr>
+        <tr><td>ふつう同士</td><td>平均3.6本・約9分</td><td>3割</td><td>―</td></tr>
+        <tr><td>得意 対 苦手</td><td>平均2.8本・約7分</td><td>2割</td><td><b>98%</b></td></tr>
+      </tbody>
+    </table></div>
+    <div class="items">
+      <article class="item">
+        <div class="top"><h3>両方とも出し切ったときの扱い</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">今は引き分けです。よく覚えている生徒どうしだと6割の本が引き分けになり、決着がつきにくく試合が長くなります。</p>
+        <ul class="opts">
+          <li><b class="k">A</b><span>今のまま引き分け</span></li>
+          <li class="rec"><b class="k">B</b><span>延長戦：山札から1枚ずつ置いていき、先にまちがえた方の負け<span class="rec-tag">おすすめ</span></span></li>
+        </ul>
+        <p class="why">Bにすると、計算では1試合が平均2.5本・約8分になり、引き分けがなくなります。延長戦なら最後まで盛り上がります。</p>
+      </article>
+      <article class="item">
+        <div class="top"><h3>実力差がある組み合わせのハンデ</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">得意な生徒が苦手な生徒と当たると、98%勝ちます。苦手な生徒のジェムが減り続けるおそれがあります。</p>
+        <ul class="opts">
+          <li><b class="k">A</b><span>ハンデなし（今のまま）</span></li>
+          <li class="rec"><b class="k">B</b><span>ジェムの差が大きいときだけ、多い方の手札を1枚ふやす<span class="rec-tag">おすすめ</span></span></li>
+        </ul>
+        <p class="why">Bにすると、計算では得意 対 苦手の勝率が98%から66%になります。ただし1枚でもかなり効きます。差が小さい組み合わせに使うと逆転しすぎるので（86%→16%）、「差が大きいときだけ」がよいです。2枚の差は効きすぎます。</p>
+      </article>
+      <article class="item">
+        <div class="top"><h3>同じ年のカードが並んだとき</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">今は、同じ年のカードの前でも後ろでも正解です（例：壇ノ浦の戦いと守護・地頭の設置は、どちらも1185年）。</p>
+        <ul class="opts">
+          <li class="rec"><b class="k">A</b><span>どちらでも正解（今のまま）<span class="rec-tag">おすすめ</span></span></li>
+          <li><b class="k">B</b><span>月まで見て順番を決める（カードのデータに月を足す）</span></li>
+          <li><b class="k">C</b><span>同じ年のカードが同じ対戦に出ないようにする</span></li>
+        </ul>
+        <p class="why">紙で遊ぶときの扱いに合わせるのがいちばんです。</p>
+      </article>
+      <article class="item">
+        <div class="top"><h3>ジェムの奪い合いと、全員の順位表</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">調査では「下位の生徒のやる気を削る」とされていますが、紙では長く実績があります。こちらでは変えていません。</p>
+        <ul class="opts">
+          <li><b class="k">A</b><span>今のまま（奪い合い・全員の順位）</span></li>
+          <li><b class="k">B</b><span>奪い合いは残し、順位表は上位だけ・自分の順位だけを出す</span></li>
+          <li><b class="k">C</b><span>勝っても負けてもジェムがもらえる（勝つと多い）</span></li>
+        </ul>
+      </article>
+      <article class="item">
+        <div class="top"><h3>最初に配るジェムの数と、0個になった生徒</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">今は先生が部屋を作るときに数を決め（最初は10個）、0個になった生徒には先生が「+5」で配ります。</p>
+      </article>
+      <article class="item">
+        <div class="top"><h3>「アプリだからこそのルール」</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">先生が考えてあるとのことで、まだ受け取っていません。届いたら試作に入れます。下の「トレーディング要素」も、このルールと関係するかもしれません。</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="ui" aria-labelledby="h-ui">
+    <div class="sec-head"><span class="n">2</span><h2 id="h-ui">操作と見た目</h2></div>
+    <div class="items">
+      <article class="item">
+        <div class="top"><h3>カードを指で引っぱって置く操作</h3><span class="st trial">お試し中</span></div>
+        <p class="q">カードが指についてきて、年表がすき間を開けます。指を離すと「ここに置く？［やめる］［ここに置く］」が出るので、指がずれても不正解にはなりません。最初に決めた「指で引っぱる操作は使わない」方針と違うため、本体では切ってあり、お試し版だけで入れています。</p>
+        <ul class="opts">
+          <li><b class="k">A</b><span>タップだけ（今の本体）</span></li>
+          <li class="rec"><b class="k">B</b><span>タップと引っぱる、どちらでも置ける<span class="rec-tag">おすすめ</span></span></li>
+        </ul>
+        <p class="why">実機で生徒数人に触ってもらい、置き間違いが多くないかを見てから決めるのがよいです。</p>
+      </article>
+      <article class="item">
+        <div class="top"><h3>手札のカードの上の帯に出すもの</h3><span class="st wait">先生待ち</span></div>
+        <ul class="opts">
+          <li class="rec"><b class="k">A</b><span>「？？？？年」（今のまま）<span class="rec-tag">おすすめ</span></span></li>
+          <li><b class="k">B</b><span>時代の名前（奈良・平安など）や、時代ごとの色</span></li>
+          <li><b class="k">C</b><span>先生のカードのデザインに合わせる</span></li>
+        </ul>
+        <p class="why">Bはヒントになるので、ゲームが易しくなります。最初の打ち合わせで「時代ヒント」は試作に入れないと決めていたので、入れるなら合わせて判断が必要です。</p>
+      </article>
+      <article class="item">
+        <div class="top"><h3>カードの絵</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">先生のカードのデザインがあれば、それを使うのが第一候補です。</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="data" aria-labelledby="h-data">
+    <div class="sec-head"><span class="n">3</span><h2 id="h-data">カードと音</h2></div>
+    <div class="items">
+      <article class="item">
+        <div class="top"><h3>本物のカードのデータ</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">今は仮の45枚です。出来事名・説明文・年の一覧が届いたら差し替えます。</p>
+      </article>
+      <article class="item">
+        <div class="top"><h3>語呂合わせ</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">45枚中34枚に入っています。もらった調査（中間版）から数字の読みが合う12件を使い、残りはこちらで入れた仮のものです。11枚は空です。</p>
+        <ul class="opts">
+          <li><b class="k">A</b><span>今のまま（もらったもの＋仮のもの）</span></li>
+          <li><b class="k">B</b><span>もらったものだけにする</span></li>
+          <li class="rec"><b class="k">C</b><span>先生が授業で使っている語呂合わせに差し替える<span class="rec-tag">おすすめ</span></span></li>
+        </ul>
+      </article>
+      <article class="item">
+        <div class="top"><h3>BGMの教室での扱い</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">教室で30台から同時に流れると、少しずつずれて重なり、うるさくなるおそれがあります。</p>
+        <ul class="opts">
+          <li><b class="k">A</b><span>最初はオン（今のまま）</span></li>
+          <li><b class="k">B</b><span>最初はオフにして、使いたい生徒だけオン</span></li>
+          <li class="rec"><b class="k">C</b><span>先生の画面から全員のBGMと効果音をまとめて切り替える（これから作る）<span class="rec-tag">おすすめ</span></span></li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section id="env" aria-labelledby="h-env">
+    <div class="sec-head"><span class="n">4</span><h2 id="h-env">教室と配り方</h2></div>
+    <div class="items">
+      <article class="item">
+        <div class="top"><h3>生徒の端末と教室のWi-Fi</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">生徒が自分のスマホを使うのか、塾のタブレットを使うのかで、画面の大きさや音の扱いが変わります。30人が同時につないでも大丈夫なWi-Fiかも確かめたいところです。</p>
+      </article>
+      <article class="item">
+        <div class="top"><h3>アプリとして配るか、ブラウザのままか</h3><span class="st wait">先生待ち</span></div>
+        <ul class="opts">
+          <li class="rec"><b class="k">A</b><span>ブラウザのまま。ホーム画面に追加すると、アプリのように開ける<span class="rec-tag">おすすめ</span></span></li>
+          <li><b class="k">B</b><span>App Store・Google Play で配る</span></li>
+        </ul>
+        <p class="why">Bは、iPhoneで特に大変です。年1万円台の登録料と Mac が要り、直すたびに Apple の審査があります。ウェブページと同じ中身のアプリは審査で断られやすく、子ども向けの決まりも厳しいです。Aなら、直してから1分で全員に届きます。</p>
+      </article>
+      <article class="item">
+        <div class="top"><h3>販売を考える場合</h3><span class="st wait">先生待ち</span></div>
+        <p class="q">「タイムライン」は市販のカードゲームの名前なので、名前と見た目を変える必要があります。BGMを作ったサービスの利用条件で、商用に使えるかも確かめておくと安心です。</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="trade" aria-labelledby="h-trade">
+    <div class="sec-head"><span class="n">5</span><h2 id="h-trade">トレーディング要素</h2></div>
+    <p class="q">「トレーディング要素」が何を指すかで、作るものが大きく変わります。考えられる意味を4つに分けました。どれも年号を覚えるという目的につなげることを第一に考えています。</p>
+    <div class="callout">
+      <h3>先生に聞きたいこと</h3>
+      <ol>
+        <li>トレードで生徒に何を楽しんでほしいか（集めるうれしさ／試合の駆け引き／友達とのやりとり）</li>
+        <li>1回の授業で終わる遊びか、何回もの授業にまたがって続けるものか（続けるなら、生徒ごとに記録を残す仕組みが要ります）</li>
+        <li>紙で遊ぶときに、カードを交換するような遊び方をしているか</li>
+      </ol>
+    </div>
+    <div class="items">
+      <article class="idea pick">
+        <div class="top" style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><h3>案1　試合の中の「交換」</h3><span class="st trial">すぐ試せる</span></div>
+        <p>1本に1回だけ、手札の1枚を交換できるルールです。たとえば、自信のないカードを山札の1枚と取りかえる、または相手の手札と1枚入れかえる、など。</p>
+        <div class="tags"><span class="tag good">記録を残さなくてよい</span><span class="tag good">駆け引きが生まれる</span><span class="tag good">「どれなら分かるか」を考える</span></div>
+        <ul class="pros">
+          <li>試作の今の仕組みのまま入れられます</li>
+          <li>「アプリだからこそのルール」の1つにもなります</li>
+          <li class="m">ルールが1つ増えるので、説明の画面を少し足す必要があります</li>
+        </ul>
+      </article>
+      <article class="idea">
+        <h3>案2　カードを集める</h3>
+        <p>正解したカードが「覚えたカード」として集まっていきます。みんなの正答率が低い難しいカードほど「レア」にします。</p>
+        <div class="tags"><span class="tag good">覚えた量が目に見える</span><span class="tag bad">生徒ごとの記録が要る</span></div>
+        <ul class="pros">
+          <li>集めるうれしさが、そのまま「覚える」につながります</li>
+          <li class="m">授業をまたいで残すには、生徒のログインが必要です。最初の打ち合わせで試作に入れないと決めた「カード図鑑」「成績の持ち越し」と重なります</li>
+        </ul>
+      </article>
+      <article class="idea">
+        <h3>案3　生徒どうしでカードを交換する</h3>
+        <p>集めたカードを友達と交換します。持っていないカードを手に入れるために、交換します。</p>
+        <div class="tags"><span class="tag good">友達とのやりとり</span><span class="tag bad">トラブルの心配</span><span class="tag bad">案2が先に要る</span></div>
+        <ul class="pros">
+          <li>教室での会話が増えます</li>
+          <li class="m">強引な交換やいじめにつながらないよう、先生が見守れる仕組みが要ります。交換そのものは、年号を覚えることにはつながりにくいです</li>
+        </ul>
+      </article>
+      <article class="idea">
+        <h3>案4　自分のデッキを組んで対戦</h3>
+        <p>集めたカードから、対戦に使うカードを自分で選んで持ち込みます。</p>
+        <div class="tags"><span class="tag good">戦い方の工夫</span><span class="tag bad">案2が先に要る</span><span class="tag bad">覚える範囲がかたよる</span></div>
+        <ul class="pros">
+          <li>得意な時代で戦うなど、作戦を考える楽しさがあります</li>
+          <li class="m">自分の得意なカードばかり使うと、苦手な時代を覚える機会が減ります。テストの点を上げるという目的とはずれやすいです</li>
+        </ul>
+      </article>
+      <article class="item">
+        <div class="top"><h3>入れない方がよいもの：ガチャ（ランダムにカードを引く）</h3><span class="st wait">注意</span></div>
+        <p class="q">ジェムを使ってランダムにカードを引く仕組みは、中学生向けには、ギャンブルのような遊び方につながるおそれがあります。お金と結びつけると、法律上の問題（景品表示法など）が出ることもあります。</p>
+      </article>
+    </div>
+    <p class="why">こちらのおすすめ：まず案1を試作に入れて、教室で試してもらう。集める楽しさ（案2）がほしければ、授業をまたいで記録を残すかどうかと一緒に決める。</p>
+  </section>
+
+  <section id="ours" aria-labelledby="h-ours">
+    <div class="sec-head"><span class="n">6</span><h2 id="h-ours">渡す前にこちらでやること</h2></div>
+    <div class="items">
+      <article class="item"><div class="top"><h3>データベースの読み書きの決まりを見直す</h3><span class="st ours">こちらで</span></div><p class="q">今は部屋のURLを知っていれば誰でも中身を読み書きできます。先生に渡す前に見直します。</p></article>
+      <article class="item"><div class="top"><h3>スマホ実機での確認</h3><span class="st ours">こちらで</span></div><p class="q">タップのしやすさ、音の鳴り方、言葉の切れ目での改行を、実際の端末で確かめます。</p></article>
+      <article class="item"><div class="top"><h3>まだ起こしていない場面の確認</h3><span class="st ours">こちらで</span></div><p class="q">3人以上が同時に対戦を待つときの組み合わせと、相手の接続が切れたときの無効試合を確かめます。</p></article>
+      <article class="item"><div class="top"><h3>カンニングへの対策</h3><span class="st ours">こちらで</span></div><p class="q">カードの年号が生徒の端末に届いているため、詳しい生徒なら答えを見られます。試作では許容していますが、本番に向けて対策を考えます。</p></article>
+    </div>
+  </section>
+</div>
