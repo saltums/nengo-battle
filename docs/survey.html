@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>カードゲームづくり 事前アンケート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0e11;--panel:#15171c;--panel2:#1b1e24;--line:#272a32;--ink:#eceef2;--sub:#868b96;--acc:#c8ff4d;--accd:rgba(200,255,77,.09)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:"Noto Sans JP",system-ui,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden;
+  background-image:radial-gradient(circle at 85% -10%,rgba(200,255,77,.08),transparent 45%),linear-gradient(var(--bg),var(--bg))}
+.mono{font-family:"JetBrains Mono",monospace}
+.app{height:100dvh;max-width:520px;margin:0 auto;display:flex;flex-direction:column;padding:14px 18px calc(16px + env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;gap:12px;height:34px;flex:none}
+.back{border:1px solid var(--line);background:var(--panel);font:inherit;font-size:16px;color:var(--sub);width:34px;height:34px;border-radius:10px;cursor:pointer;visibility:hidden}
+.bar{flex:1;height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .35s cubic-bezier(.2,.8,.2,1)}
+.count{font-size:12px;color:var(--sub);min-width:44px;text-align:right}
+.screen{flex:1;display:flex;flex-direction:column;min-height:0;animation:in .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.sec{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:11px;letter-spacing:.14em;color:var(--acc)}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+h1{font-size:clamp(20px,5.6vw,25px);font-weight:900;line-height:1.4;margin:8px 0 4px;letter-spacing:.01em}
+.sub{font-size:12.5px;color:var(--sub);margin-bottom:12px;min-height:1.2em}
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-height:0;grid-auto-rows:1fr}
+.grid.odd .opt:last-child{grid-column:1/-1}
+.opt{border:1px solid var(--line);background:var(--panel);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;cursor:pointer;font:inherit;color:inherit;transition:transform .12s,border-color .15s,background .15s;position:relative;min-height:0;overflow:hidden}
+.opt:active{transform:scale(.97)}
+.opt .e{font-size:clamp(28px,8.5vw,40px);line-height:1;filter:grayscale(1) brightness(1.1);opacity:.75;transition:filter .2s,opacity .2s}
+.opt .l{font-size:clamp(12px,3.5vw,14px);font-weight:700;text-align:center;line-height:1.35;color:#cfd2d8}
+.opt.on{border-color:var(--acc);background:var(--accd);box-shadow:0 0 0 1px var(--acc) inset}
+.opt .l small{display:block;font-size:10.5px;font-weight:500;color:var(--sub);margin-top:3px;line-height:1.4}
+.opt .l small.rec{color:var(--acc);font-weight:700}
+.opt.on .e{filter:none;opacity:1}
+.opt.on .l{color:var(--ink)}
+.opt.on::after{content:"";position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 10px var(--acc)}
+.foot{flex:none;padding-top:12px;display:flex;gap:10px}
+.btn{flex:1;border:none;border-radius:14px;padding:16px;font:inherit;font-size:16px;font-weight:900;cursor:pointer;background:var(--acc);color:#0d0e11;letter-spacing:.04em;transition:opacity .2s}
+.btn:disabled{opacity:.25}
+textarea,input{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--panel);font:inherit;font-size:16px;padding:14px;color:var(--ink);resize:none;outline:none;transition:border-color .15s}
+textarea::placeholder,input::placeholder{color:#565b66}
+textarea:focus,input:focus{border-color:var(--acc)}
+textarea{height:130px}
+.ow{flex:none;padding-top:8px}
+.ow input{padding:12px 14px}
+/* intro */
+.intro{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px}
+.stack{position:relative;height:120px;margin-bottom:6px}
+.stack div{position:absolute;left:50%;top:6px;width:72px;height:104px;border-radius:10px;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel))}
+.stack div:nth-child(1){transform:translateX(-50%) rotate(-14deg) translateX(-34px)}
+.stack div:nth-child(2){transform:translateX(-50%) rotate(12deg) translateX(34px)}
+.stack div:nth-child(3){transform:translateX(-50%);border-color:var(--acc);box-shadow:0 0 30px rgba(200,255,77,.18);display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono",monospace;color:var(--acc);font-weight:700;font-size:22px}
+.kicker{font-size:11px;letter-spacing:.2em;color:var(--sub);text-align:center}
+.title{font-size:clamp(26px,7.5vw,32px);font-weight:900;text-align:center;line-height:1.3}
+.lead{text-align:center;font-size:14px;color:#cfd2d8}
+.meta{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.meta span{font-size:11px;color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+/* summary */
+.tabs{display:flex;gap:6px;flex:none;margin-bottom:8px}
+.tab{flex:1;border:1px solid var(--line);background:var(--panel);color:var(--sub);border-radius:10px;padding:8px 4px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.tab.on{color:#0d0e11;background:var(--acc);border-color:var(--acc)}
+.sum{flex:1;min-height:0;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:6px 14px;overflow:hidden}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.row span{color:var(--sub);font-size:11.5px;flex:none;padding-top:1px}
+.row b{font-size:13.5px;text-align:right;font-weight:700;line-height:1.45}
+.status{font-size:12.5px;text-align:center;min-height:1.4em;color:var(--acc);padding-top:10px}
+/* 第2弾の前置き（案のまとめ） */
+.brief{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}
+.brief .card{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:12px 14px;font-size:13.5px;line-height:1.65;color:#cfd2d8}
+.brief .packs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.brief .packs div{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:10px 4px;text-align:center;font-size:12px;font-weight:700;line-height:1.4}
+.brief .packs b{display:block;font-family:"JetBrains Mono",monospace;font-size:22px;color:var(--acc)}
+
+/* ===== retro top page ===== */
+body.retro{background:#000044;background-image:radial-gradient(1px 1px at 20px 30px,#fff,transparent),radial-gradient(1px 1px at 90px 80px,#ff0,transparent),radial-gradient(1.5px 1.5px at 150px 20px,#fff,transparent),radial-gradient(1px 1px at 60px 140px,#0ff,transparent),radial-gradient(1px 1px at 170px 120px,#fff,transparent);background-size:200px 160px}
+body.retro .top{display:none}
+.rt{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;font-family:"DotGothic16","MS PGothic",monospace;color:#fff;text-align:center;padding:4px 0 2px;min-height:0}
+.rt marquee{width:100%;background:#000;border:2px ridge #c0c0c0;color:#ffff00;font-size:13px;padding:3px 0}
+.rt .since{font-size:11px;color:#9cf;margin-top:4px}
+.rt .logo{font-size:clamp(27px,8.6vw,36px);font-weight:900;line-height:1.15;letter-spacing:.02em;font-family:"Noto Sans JP",sans-serif;
+  background:linear-gradient(90deg,#f00,#f90,#ff0,#0f0,#0ff,#00f,#f0f,#f00);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(3px 3px 0 #000) drop-shadow(-1px -1px 0 #fff);animation:rb 3s linear infinite;transform:skewX(-8deg)}
+@keyframes rb{to{background-position:200% 0}}
+.rt .catch{font-size:13px;color:#ff99ff}
+.rt hr{width:100%;height:4px;border:none;background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f);margin:2px 0}
+.rt .koji{background:repeating-linear-gradient(45deg,#ff0 0 10px,#000 10px 20px);padding:3px;display:inline-block}
+.rt .koji span{display:block;background:#ff0;color:#000;font-size:12px;padding:3px 10px}
+.rt .counter{font-size:12px;color:#fff}
+.rt .counter b{display:inline-flex;gap:1px;vertical-align:middle;margin:0 4px}
+.rt .counter b i{font-style:normal;background:#000;color:#0f0;border:1px solid #555;padding:0 3px;font-size:15px;font-family:"JetBrains Mono",monospace}
+.blink{animation:bl 1s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+.rt .kiri{color:#f33;font-size:13px}
+.rt table{border-collapse:collapse;width:92%;font-size:13px;background:#000080}
+.rt td{border:2px outset #c0c0c0;padding:5px 8px;text-align:left}
+.rt td.h{background:#808080;color:#fff;text-align:center;letter-spacing:.3em}
+.rt td a{color:#0ff;text-decoration:underline;cursor:pointer}
+.rt td a.dead{color:#99c}
+.rt .new{color:#ff0;font-size:10px;margin-left:4px}
+.rt .done{color:#9cf;font-size:10px;margin-left:4px}
+.rt .note{font-size:10px;color:#89a}
+.rt .msg2{font-size:12px;color:#ff0;min-height:1.3em}
+.rt .enter{font-family:"DotGothic16",monospace;font-size:17px;background:#c0c0c0;color:#000;border:3px outset #fff;padding:9px 18px;cursor:pointer;width:92%}
+.rt .enter:active{border-style:inset}
+.loading{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-family:"DotGothic16",monospace;color:#0f0}
+.loading .pb{width:220px;height:16px;border:2px inset #c0c0c0;background:#000;padding:2px}
+.loading .pb i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,#00f 0 8px,transparent 8px 10px);animation:ld 1.3s steps(12) forwards}
+@keyframes ld{to{width:100%}}
+@media (prefers-reduced-motion: reduce){.rt .logo,.blink,.screen{animation:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><button class="back" id="back" aria-label="戻る">←</button><div class="bar"><i id="bar"></i></div><div class="count mono" id="count"></div></div>
+  <div class="screen" id="screen"></div>
+</div>
+<script>
+// アンケートは2つ。第1弾（事前アンケート）と第2弾（スターターパック編）
+const FORMS={
+ f1:{name:'第1弾',title:'カードゲーム事前アンケート',
+  SEC:{game:'GAME — ゲームの中身',plan:'PLAN — 進め方',after:'AFTER — 完成後'},
+  Q:[
+ {sec:'game',id:'stage',s:'今どこまで考えているか',t:'このゲーム、今どこまで考えていますか？',opts:[['A','☁️','まだ\nふんわり'],['B','💭','頭の中に\nイメージがある'],['C','📝','メモや絵が\nある'],['D','📏','ルールまで\n決まっている']]},
+ {sec:'game',id:'pitch',s:'一言でいうと',t:'どんなゲームですか？一言でお願いします',type:'text',sub:'ざっくりで大丈夫です',ph:'例：〇〇が〇〇して勝つカードゲーム'},
+ {sec:'game',id:'theme',s:'テーマ・世界観',t:'テーマや世界観はどんな感じですか？',other:1,opts:[['A','🐉','ファンタジー'],['B','🏙️','現代・日常'],['C','🐾','動物・\nかわいい系'],['D','👻','ホラー・\nダーク'],['E','🚀','SF・未来'],['F','🤪','ネタ・ギャグ']]},
+ {sec:'game',id:'genre',s:'遊び方のタイプ',t:'どんな遊び方のゲームですか？',other:1,opts:[['A','⚔️','対戦\n（相手と戦う）'],['B','🤝','協力\n（全員で目標を目指す）'],['C','🧭','一人用\n（デッキを育てて進む系）'],['D','🎉','パーティ系\n（みんなでワイワイ）']]},
+ {sec:'game',id:'fun',s:'一番盛り上がる瞬間',t:'一番盛り上がってほしいのは、どんな瞬間ですか？',multi:true,other:1,sub:'いくつでも選べます',opts:[['A','🔄','大逆転\nしたとき'],['B','💥','コンボが\n決まったとき'],['C','🧠','相手の手を\n読み合うとき'],['D','🎲','運で\n盛り上がるとき'],['E','📚','カードを\n集める・育てる']]},
+ {sec:'game',id:'players',s:'遊ぶ人数',t:'何人で遊ぶゲームですか？',other:1,opts:[['A','👤','1人'],['B','👥','2人'],['C','🧑‍🤝‍🧑','3人以上']]},
+ {sec:'game',id:'time',s:'1回の遊ぶ時間',t:'1回で遊ぶ時間はどれくらいですか？',other:1,opts:[['A','⏱️','5分以内'],['B','☕','15分くらい'],['C','🌙','30分以上']]},
+ {sec:'game',id:'ref',s:'参考にしたいゲーム',t:'参考にしたいゲームはありますか？',type:'text',sub:'カードゲーム以外でも大丈夫です。なければ空欄のまま次へ',ph:'例：〇〇のこの部分が好き'},
+ {sec:'plan',id:'form',s:'遊ぶ形',t:'最終的に、どんな形で遊びたいですか？',other:1,opts:[['A','📱','スマホ・PCの\nゲーム'],['B','🃏','紙のカード\n（実物）'],['C','🤷','どちらでもいい']]},
+ {sec:'plan',id:'purpose',s:'完成後どうしたいか',t:'完成したら、どうしたいですか？',other:1,opts:[['A','🎮','身内で\n遊べればいい'],['B','🌐','ネットで\n公開したい'],['C','💰','いずれ\n販売したい'],['D','🤔','まだ\nわからない']]},
+ {sec:'plan',id:'role',s:'やってみたいこと',t:'ゲームづくりで、ご自身がやってみたいことは？',multi:true,other:1,sub:'いくつでも選べます',opts:[['A','💡','ルールや\nアイデアを考える'],['B','🎨','絵・カードの\nデザイン'],['C','🤖','AIを使って\n自分でも作ってみたい'],['D','🙋','遊んで\n感想を伝える']]},
+ {sec:'plan',id:'ai',s:'AIの経験',t:'AIを使ったことはありますか？',opts:[['A','🙅','ない'],['B','💬','ChatGPTなどで\n少し'],['C','🧠','普段から\n使っている']]},
+ {sec:'plan',id:'pace',s:'相談のペース',t:'相談の連絡は、どれくらいのペースがいいですか？',other:1,opts:[['A','📅','週1くらい'],['B','🍃','都合のいい\nときに'],['C','🏁','締切を決めて\n進めたい']]},
+ {sec:'after',id:'life',s:'完成後の続け方',t:'完成したあと、どれくらい続けたいですか？',other:1,opts:[['A','🏁','完成したら\n一区切り'],['B','🔧','ときどき\n直したい'],['C','🌱','カード追加など\n長く育てたい'],['D','🤔','まだ\nわからない']]},
+ {sec:'after',id:'maint',s:'修正・更新の担当',t:'完成後の修正や更新は、誰がやるのがいいですか？',other:1,opts:[['A','🛠️','自分で\nできるようになりたい'],['B','🤝','一緒に\nやりたい'],['C','🙏','基本は\nお任せしたい'],['D','🤔','まだ\nわからない']]},
+ {sec:'after',id:'cost',s:'かけられる費用',t:'かかる費用（AIの利用料・公開の費用など）は、どこまでなら大丈夫ですか？',other:1,opts:[['A','🆓','無料の範囲で'],['B','🪙','月1,000円\nくらいまで'],['C','💳','月数千円\nまでなら'],['D','🤔','まだ\nわからない']]},
+ ]},
+ f2:{name:'第2弾',title:'第2弾アンケート スターターパック編',brief:true,
+  SEC:{rule:'RULE — 遊び方',make:'MAKE — 作り方'},
+  Q:[
+ {sec:'rule',id:'take',s:'勝ったときにもらうカード',t:'勝ったときにもらうカードは、相手から「取る」？「写す」？',sub:'「取る」と、苦手な生徒ほどカードが減って勝てなくなります（計算では、得意な生徒が苦手な生徒に98%勝ちます）',other:1,
+  opts:[['A','✂️','相手から取る\n（相手は1枚へる）'],['B','📄','写す\n（相手にも残る）'],['C','🎁','写す＋負けた側も\nまちがえたカードを1枚\n（★おすすめ）']]},
+ {sec:'rule',id:'deck',s:'対戦の山札',t:'対戦で使う山札は、どう作りますか？',sub:'今は全員が同じカードの山札を使っています',other:1,
+  opts:[['A','🔀','2人の手持ちを\n混ぜる\n（★おすすめ）'],['B','🎴','それぞれ自分の\n手持ちだけ'],['C','📚','全員共通のまま\n（集めたカードは眺めるだけ）']]},
+ {sec:'rule',id:'size',s:'パックの枚数',t:'1つのパックは何枚にしますか？',sub:'手札4枚で始めるので、4枚のパックでは山札が足りません',other:1,
+  opts:[['A','🃏','10枚'],['B','🗂️','15枚\n（★おすすめ）'],['C','📦','20枚']]},
+ {sec:'rule',id:'common',s:'全員共通のカード',t:'全員に共通のカードもまぜますか？',sub:'自分のパックばかりだと、テスト範囲を一通り覚える機会が減るかもしれません',other:1,
+  opts:[['A','🙅','まぜない'],['B','🤏','数枚だけまぜる\n（★おすすめ）'],['C','⚖️','半分くらい\nまぜる']]},
+ {sec:'rule',id:'name',s:'ガールズパックの名前',t:'「ガールズパック」の名前はどうしますか？',sub:'「女子向け」と受け取られて、男子が選びにくくなるかもしれません。名前の案があれば「その他」に書いてください',other:1,
+  opts:[['A','👍','このまま'],['B','🔁','だれでも選びやすい\n名前にする\n（★おすすめ・名前はおまかせ）']]},
+ {sec:'make',id:'list',s:'カードの一覧づくり',t:'パックのカードの一覧（出来事・説明文・年）は、だれが作りますか？',sub:'パック案は近現代と世界史が中心なので、今の仮のカード（古代〜江戸の日本史）とは別に作ります',other:1,
+  opts:[['A','✍️','先生が用意する'],['B','🤖','こちらで下書き→\n先生が確かめる\n（★おすすめ）']]},
+ {sec:'make',id:'login',s:'ログインのやり方',t:'ログインのやり方はどうしますか？',sub:'集めたカードを授業をまたいで残すために、生徒ごとの記録が要ります。本名やメールは使わない形にしたいです',other:1,
+  opts:[['A','🔑','先生がIDと\n4けたの番号を配る\n（★おすすめ）'],['B','🌐','Googleアカウント\nで入る'],['C','📱','ログインなし\n（端末にだけ残す）']]},
+ {sec:'make',id:'cheat',s:'ズル対策',t:'ズル（持ち物の書きかえ）への対策は？',sub:'詳しい生徒なら手持ちを書きかえられます。きちんと防ぐにはサーバーの仕組みを足します（クラス1つ分ならほぼ無料の範囲）',other:1,
+  opts:[['A','🧪','試すあいだは\n気にしない\n（★おすすめ）'],['B','🛡️','最初から\nきちんと防ぐ']]},
+ {sec:'make',id:'plan',s:'作る順番',t:'どんな順番で作りますか？',other:1,
+  opts:[['A','🐣','まずログインなしで\n1回の授業だけ試す\n（★おすすめ）'],['B','🏗️','最初から\nログイン・記録つき']]},
+ {sec:'make',id:'memo',s:'ほかに伝えたいこと',t:'ほかに伝えたいことはありますか？',type:'text',sub:'パックの中身の案、遊び方のこだわりなど。なければ空欄のまま次へ',ph:'例：戦争パックには〇〇も入れたい'},
+ ]},
+};
+Object.values(FORMS).forEach(f=>f.Q.forEach(q=>{if(q.other){q.ok=String.fromCharCode(65+q.opts.length);q.opts.push([q.ok,'✏️','その他'])}}));
+let FORM=FORMS.f2,SEC=FORM.SEC,Q=FORM.Q;
+let S={step:-1,name:'',a:{},o:{},tab:'game'};
+const $=s=>document.querySelector(s);
+const screen=$('#screen'),back=$('#back');
+const pad=n=>String(n).padStart(2,'0');
+function useForm(k){FORM=FORMS[k];SEC=FORM.SEC;Q=FORM.Q;S={step:0,name:'',a:{},o:{},tab:Object.keys(SEC)[0],brief:!!FORM.brief}}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function prog(){
+  const n=Q.length, i=Math.max(0,Math.min(S.step,n));
+  $('#bar').style.width=(S.step<0?0:i/n*100)+'%';
+  $('#count').textContent=(S.step>=0&&S.step<n&&!S.brief)?`${pad(S.step+1)}/${pad(n)}`:'';
+  back.style.visibility=(S.step>=0&&S.step<=n)?'visible':'hidden';
+}
+function go(i){S.step=i;if(i>=0)document.body.classList.remove('retro');render()}
+back.onclick=()=>{if(S.step===0&&FORM.brief&&!S.brief){S.brief=true;render();return}go(S.step-1)};
+function anim(){screen.style.animation='none';screen.offsetHeight;screen.style.animation=''}
+
+function brief(){
+  screen.innerHTML=`<div class="sec mono">IDEA — 先生の案</div><h1>スターターパックの案について</h1><div class="sub">作り始める前に決めたいことを、${Q.length}問で聞かせてください</div>
+  <div class="brief">
+    <div class="packs"><div><b>A</b>戦争パック</div><div><b>B</b>革命パック</div><div><b>C</b>ガールズパック</div></div>
+    <div class="card">初めて遊ぶときに、3種類のスターターパックから1つ選ぶ。対戦に勝つと、相手が使ったカードから1枚もらえる。手持ちのカードが増えていくので少しずつ覚えられ、集める楽しさで長く遊べる。</div>
+    <div class="card">セーブデータを残すには、生徒ごとのログインが必要になります。迷ったら「★おすすめ」を選んでください。</div>
+  </div>
+  <div class="foot"><button class="btn" id="nx">はじめる</button></div>`;
+  $('#nx').onclick=()=>{S.brief=false;render()};
+}
+
+function render(){
+  prog();anim();
+  if(S.step<0) return intro();
+  if(S.brief) return brief();
+  if(S.step>=Q.length) return done();
+  const q=Q[S.step];
+  let h=`<div class="sec mono">${SEC[q.sec]}</div><h1>${q.t}</h1><div class="sub">${q.sub||''}</div>`;
+  if(q.type==='text'){
+    h+=`<textarea id="ta" placeholder="${esc(q.ph)}">${esc(S.a[q.id]||'')}</textarea><div style="flex:1"></div><div class="foot"><button class="btn" id="nx">次へ</button></div>`;
+    screen.innerHTML=h;
+    $('#nx').onclick=()=>{S.a[q.id]=$('#ta').value.trim();go(S.step+1)};
+    return;
+  }
+  const cur=S.a[q.id]||(q.multi?[]:null);
+  const hasO=()=>{const c=S.a[q.id];return q.other&&(q.multi?(c||[]).includes(q.ok):c===q.ok)};
+  h+=`<div class="grid ${q.opts.length%2?'odd':''}">`+q.opts.map(o=>{
+    const on=q.multi?cur.includes(o[0]):cur===o[0];
+    return `<button class="opt ${on?'on':''}" data-k="${o[0]}"><span class="e">${o[1]}</span><span class="l">${esc(o[2]).replace(/\n?（(.+?)）/g,(m,t)=>`<small${t.startsWith('★')?' class="rec"':''}>${t}</small>`).replace(/\n/g,'<br>')}</span></button>`}).join('')+`</div>`;
+  if(q.other) h+=`<div class="ow" id="ow" style="display:${hasO()?'block':'none'}"><input id="ot" placeholder="内容を入力してください" value="${esc(S.o[q.id]||'')}"></div>`;
+  h+=`<div class="foot" id="ft" style="display:${(q.multi||hasO())?'flex':'none'}"><button class="btn" id="nx">次へ</button></div>`;
+  screen.innerHTML=h;
+  const ow=$('#ow'),ft=$('#ft'),nx=$('#nx'),ot=$('#ot');
+  const ready=()=>{const c=S.a[q.id];const any=q.multi?(c||[]).length>0:!!c;nx.disabled=!any||(hasO()&&!(ot&&ot.value.trim()))};
+  const sync=(focus)=>{const o=hasO();if(ow)ow.style.display=o?'block':'none';ft.style.display=(q.multi||o)?'flex':'none';if(o&&focus&&ot)ot.focus();ready()};
+  if(ot) ot.oninput=()=>{S.o[q.id]=ot.value;ready()};
+  screen.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k;
+    if(q.multi){
+      const arr=(S.a[q.id]||[]).slice();const j=arr.indexOf(k);j<0?arr.push(k):arr.splice(j,1);arr.sort();S.a[q.id]=arr;
+      b.classList.toggle('on');sync(k===q.ok&&j<0);
+    }else{
+      S.a[q.id]=k;screen.querySelectorAll('.opt').forEach(x=>x.classList.toggle('on',x===b));
+      if(k===q.ok) sync(true); else {sync(false);setTimeout(()=>go(S.step+1),240);}
+    }
+  });
+  nx.onclick=()=>{if(ot)S.o[q.id]=ot.value.trim();go(S.step+1)};
+  ready();
+}
+
+function intro(){
+  document.body.classList.add('retro');
+  screen.innerHTML=`<div class="rt">
+    <marquee scrollamount="5">★☆★ ようこそいらっしゃいました！！ カードゲーム制作委員会 公式ホームページへ ★☆★ アンケート第2弾 スターターパック編 公開しました！！ ご協力お願いいたします m(_ _)m ★☆★</marquee>
+    <div class="since">Since 2026.11.19 ／ 最終更新：2026.11.26</div>
+    <div class="logo">★カードゲーム★<br>制作委員会</div>
+    <div class="catch">～アイデア、聞かせてください～</div>
+    <div class="koji"><span>🚧 只今 試作 工事中 🚧</span></div>
+    <div class="counter">あなたは<b><i>0</i><i>0</i><i>0</i><i>0</i><i>0</i><i>2</i></b>人目のお客様です</div>
+    <div class="kiri blink">★キリ番GET★ 踏み逃げ禁止！！</div>
+    <hr>
+    <table>
+      <tr><td class="h">▼ M E N U ▼</td></tr>
+      <tr><td>◆ <a id="go2">アンケート第2弾 スターターパック編</a><span class="new blink">NEW!</span></td></tr>
+      <tr><td>◆ <a id="go1">アンケート第1弾 事前アンケート</a></td></tr>
+      <tr><td>◆ <a class="dead" data-m="試作置き場は工事中です。完成までもうしばらくお待ちください">試作置き場</a>（工事中）</td></tr>
+    </table>
+    <div class="msg2" id="m2"></div>
+    <button class="enter" id="st">≫≫ 第2弾アンケートに入る ≪≪</button>
+    <div class="note">※このページは 800×600・IE5.5 以上での閲覧を推奨します<br>第2弾は全${FORMS.f2.Q.length}問・約3分</div>
+  </div>`;
+  const enter=k=>{
+    screen.innerHTML=`<div class="loading"><div>Now Loading...</div><div class="pb"><i></i></div><div style="font-size:11px;color:#9cf">ブラウザを最新にしています</div></div>`;
+    setTimeout(()=>{document.body.classList.remove('retro');useForm(k);render()},1500);
+  };
+  $('#st').onclick=()=>enter('f2');$('#go2').onclick=()=>enter('f2');$('#go1').onclick=()=>enter('f1');
+  screen.querySelectorAll('a.dead').forEach(a=>a.onclick=()=>{$('#m2').textContent='※'+a.dataset.m});
+}
+
+function label(q,k){const o=q.opts.find(o=>o[0]===k);if(!o)return '';const b=o[2].replace(/\n/g,'').replace(/（★[^）]*）/g,'');return k===q.ok?`${b}（${S.o[q.id]||''}）`:b}
+function ans(q){
+  const v=S.a[q.id];
+  if(q.type==='text') return v||'（空欄）';
+  if(q.multi) return (v&&v.length)?v.map(k=>label(q,k)).join('、'):'（未回答）';
+  return v?label(q,v):'（未回答）';
+}
+function toText(){
+  let out=`【${FORM.title}】\n`;
+  Object.keys(SEC).forEach(sec=>{
+    out+=`\n― ${SEC[sec].split('— ')[1]} ―\n`;
+    Q.filter(q=>q.sec===sec).forEach(q=>{out+=`■${q.s}\n　${ans(q)}\n`});
+  });
+  return out.trim();
+}
+function done(){
+  const txt=toText();
+  const photo=FORM===FORMS.f1&&['C','D'].includes(S.a.stage);
+  screen.innerHTML=`<div class="sec mono">CHECK — 回答の確認</div><h1>ありがとうございます！</h1>
+  <div class="sub">${photo?'メモやルールがあれば、写真もLINEで送っていただけると助かります':FORM===FORMS.f2?'パックの中身の案やメモがあれば、写真もLINEで送っていただけると助かります':'直したい場合は左上の ← で戻れます'}</div>
+  <div class="tabs">${Object.keys(SEC).map(k=>`<button class="tab ${S.tab===k?'on':''}" data-t="${k}">${SEC[k].split('— ')[1]}</button>`).join('')}</div>
+  <div class="sum" id="sum"></div>
+  <div class="status" id="stt"></div>
+  <div class="foot"><button class="btn" id="cp">コピーしてLINEで送る</button></div>`;
+  const fill=()=>{$('#sum').innerHTML=Q.filter(q=>q.sec===S.tab).map(q=>`<div class="row"><span>${esc(q.s)}</span><b>${esc(ans(q))}</b></div>`).join('');
+    screen.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.t===S.tab))};
+  screen.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{S.tab=t.dataset.t;fill()});
+  fill();
+  $('#cp').onclick=async()=>{
+    try{await navigator.clipboard.writeText(txt);$('#stt').textContent='コピーしました。LINEに貼り付けて送ってください';}
+    catch(e){$('#stt').textContent='コピーできなかったため、この画面のスクショを送ってください';}
+  };
+}
+
+render();
+</script>
+</body>
+</html>
