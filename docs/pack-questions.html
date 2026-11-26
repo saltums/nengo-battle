@@ -1,0 +1,163 @@
+<title>スターターパックの質問</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* アプリと同じ白地に青。1問ずつカードにして、選択肢をタップで選ぶ。下に進み具合と送り方 */
+:root{
+  --page:#f3f5fa;--panel:#ffffff;--line:#d6dbe8;--ink:#1b2233;--ink2:#3d465c;--sub:#667089;
+  --acc:#3d5afe;--onacc:#ffffff;--accd:rgba(61,90,254,.08);--ok:#0f9d63;--okd:rgba(15,157,99,.09);
+  --font:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#10131b;--panel:#1b2130;--line:#323a50;--ink:#e8ecf5;--ink2:#c3cad9;--sub:#939cb2;
+  --acc:#7b91ff;--onacc:#0f1320;--accd:rgba(123,145,255,.14);--ok:#3fcb8f;--okd:rgba(63,203,143,.13);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --page:#10131b;--panel:#1b2130;--line:#323a50;--ink:#e8ecf5;--ink2:#c3cad9;--sub:#939cb2;
+  --acc:#7b91ff;--onacc:#0f1320;--accd:rgba(123,145,255,.14);--ok:#3fcb8f;--okd:rgba(63,203,143,.13);color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.7}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 140px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:clamp(22px,5vw,28px);font-weight:900;line-height:1.4;margin:0;text-wrap:balance;word-break:auto-phrase}
+h2{font-size:17px;font-weight:900;margin:0;line-height:1.5;word-break:auto-phrase;text-wrap:balance}
+p{margin:0}
+.kicker{font-size:12px;font-weight:700;color:var(--acc);letter-spacing:.08em}
+header{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+.lead{color:var(--ink2)}
+.idea{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:14px;color:var(--ink2);display:flex;flex-direction:column;gap:6px}
+.idea b{color:var(--ink)}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.q.done{border-color:var(--acc)}
+.qh{display:flex;gap:10px;align-items:baseline}
+.qn{flex:none;font-family:var(--mono);font-weight:700;font-size:13px;color:var(--onacc);background:var(--sub);border-radius:99px;min-width:28px;height:24px;display:inline-flex;align-items:center;justify-content:center;padding:0 7px}
+.q.done .qn{background:var(--acc)}
+.why{font-size:13.5px;color:var(--sub)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;border:1.5px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 14px;font:inherit;color:var(--ink);cursor:pointer;min-height:48px}
+.opt:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.opt .dot{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--line);margin-top:2px;display:flex;align-items:center;justify-content:center}
+.opt[aria-checked="true"]{border-color:var(--acc);background:var(--accd)}
+.opt[aria-checked="true"] .dot{border-color:var(--acc)}
+.opt[aria-checked="true"] .dot::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--acc)}
+.opt .tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.opt .tx b{font-weight:700;font-size:15px}
+.opt .tx small{font-size:13px;color:var(--sub);line-height:1.5}
+.rec{display:inline-block;font-size:11.5px;font-weight:700;color:var(--onacc);background:var(--acc);border-radius:99px;padding:0 8px;margin-left:6px;line-height:1.7;vertical-align:1px}
+.note{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);background:var(--panel);resize:vertical;min-height:44px}
+.note:focus{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
+.note::placeholder{color:var(--sub)}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -8px 24px rgba(27,34,51,.1);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.bar .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.prog{flex:1;min-width:160px;display:flex;flex-direction:column;gap:4px}
+.prog .t{font-size:13px;font-weight:700}
+.prog .t span{font-family:var(--mono)}
+.track{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.track i{display:block;height:100%;background:var(--acc);width:0;transition:width .25s}
+.state{font-size:12.5px;color:var(--sub)}
+.state.ok{color:var(--ok)}
+.btn{border:none;border-radius:12px;padding:11px 18px;font:inherit;font-size:14.5px;font-weight:900;background:var(--acc);color:var(--onacc);cursor:pointer;min-height:44px}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.copybox{display:none;width:100%;min-height:160px;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel);color:var(--ink)}
+.copybox.show{display:block}
+@media (prefers-reduced-motion: reduce){.track i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">年号ならべバトル（仮）・先生への質問</div>
+    <h1>スターターパックの案について、9つの質問</h1>
+    <p class="lead">「最初にパックを選び、勝つと相手のカードを1枚もらえる」案を作り始める前に、決めておきたいことです。選択肢をタップして選んでください。迷ったら「おすすめ」のままで大丈夫です。気になることがあれば、各質問の下にひとこと書けます。</p>
+  </header>
+  <div class="idea">
+    <p><b>先生の案（まとめ）</b></p>
+    <p>初めて遊ぶときに3種類のスターターパック（戦争・革命・ガールズ）から1つ選ぶ。対戦で勝つと、相手が使ったカードから1枚もらえる。手持ちのカードが増えていくので少しずつ覚えられ、集める楽しさで長く遊べる。</p>
+  </div>
+  <main id="qs" style="display:flex;flex-direction:column;gap:18px"></main>
+  <textarea class="copybox" id="copybox" readonly aria-label="答えのまとめ"></textarea>
+</div>
+
+<div class="bar" role="region" aria-label="進み具合">
+  <div class="in">
+    <div class="prog">
+      <div class="t">答えた質問 <span id="cnt">0 / 9</span></div>
+      <div class="track"><i id="fill"></i></div>
+      <div class="state" id="state">選ぶと、この画面に答えが残ります</div>
+    </div>
+    <button class="btn" type="button" id="copy">答えをコピー</button>
+  </div>
+</div>
+
+<script>
+(()=>{
+const Q=[
+  {id:'take',t:'勝ったときにもらうカードは、相手から「取る」？「写す」？',why:'「取る」と負けた側のカードが減ります。テストプレイの計算では、得意な生徒は苦手な生徒に98%勝つので、苦手な生徒ほどカードが減って勝てなくなります。',
+   o:[['A','取る','負けた側の手持ちから1枚なくなる'],['B','写す','勝った側がもらい、負けた側にも残る'],['C','写す＋負けた側もまちがえたカードを1枚もらえる','負けても覚える材料が手に入る',1]]},
+  {id:'deck',t:'対戦で使う山札は、どう作る？',why:'今は全員が同じカードの山札を使っています。手持ち方式にするなら作り方を決める必要があります。',
+   o:[['A','2人の手持ちを混ぜて山札にする','相手のカードに出会えるので、もらいたいカードが見つかる',1],['B','それぞれ自分の手持ちから出す','自分のカードだけで戦う'],['C','山札は全員共通のまま','手持ちは「集めたもの」として眺めるだけ']]},
+  {id:'size',t:'1つのパックは何枚にする？',why:'手札4枚で始めるので、4枚のパックでは山札が足りません。',
+   o:[['A','10枚','覚えはじめやすい'],['B','15枚','2人分を混ぜて30枚になり、今の山札（45枚）に近い',1],['C','20枚','最初から多めに練習できる']]},
+  {id:'list',t:'パックのカードの一覧（出来事・説明文・年）は、だれが作る？',why:'パック案の例は近現代と世界史が中心なので、今の仮のカード（古代〜江戸の日本史）とは別に作ることになります。',
+   o:[['A','先生が用意する',''],['B','こちらで下書きを作り、先生が確かめる','教科書の範囲を教えてもらえれば下書きします',1]]},
+  {id:'common',t:'全員に共通のカードもまぜる？',why:'自分のパックのカードばかり練習すると、テストに出る範囲を一通り覚える機会が減るかもしれません。',
+   o:[['A','まぜない','パックの個性がはっきりする'],['B','数枚だけまぜる','テスト範囲の大事な出来事を全員が練習できる',1],['C','半分くらいまぜる','覚える範囲のかたよりがいちばん少ない']]},
+  {id:'name',t:'「ガールズパック」の名前は？',why:'「女子向け」と受け取られて、男子が選びにくくなるかもしれません。',
+   o:[['A','このままにする',''],['B','だれでも選びやすい名前にする','たとえば「活躍した人物パック」。下に案があれば書いてください',1]]},
+  {id:'login',t:'ログインのやり方は？',why:'集めたカードを授業をまたいで残すには、生徒ごとの記録が必要です。中学生の記録なので、本名やメールアドレスは使わない形にしたいです。',
+   o:[['A','先生がIDと4けたの番号を配る','メール不要。忘れても先生の画面で確かめられる',1],['B','Googleアカウントで入る','塾でアカウントを配っている場合に楽'],['C','ログインなし（端末にだけ残す）','いちばんかんたん。端末を替えたり共用したりすると消える']]},
+  {id:'cheat',t:'ズル（持ち物の書きかえ）への対策は？',why:'今の作りでは、詳しい生徒なら自分の手持ちを書きかえられます。きちんと防ぐには、Firebase を従量課金のプランにします（クラス1つ分なら、ほぼ無料の範囲のはず）。',
+   o:[['A','試すあいだは気にしない。本番の前に対策する','',1],['B','最初からきちんと防ぐ','作るのに少し時間がかかる']]},
+  {id:'plan',t:'どんな順番で作る？',why:'',
+   o:[['A','まずログインなしで、1回の授業の中だけで試す','楽しいか先に確かめてから、記録の持ち越しを足す',1],['B','最初からログインと記録の持ち越しをつける','そのまま長く使える形で始められる']]},
+];
+const N=Q.length;
+let ans={};try{ans=JSON.parse(localStorage.getItem('pq-draft')||'{}')||{}}catch(e){ans={}}
+const qs=document.getElementById('qs');
+Q.forEach((q,i)=>{
+  const el=document.createElement('section');el.className='q';el.id='q-'+q.id;el.setAttribute('aria-labelledby','qt-'+q.id);
+  el.innerHTML=`<div class="qh"><span class="qn">${i+1}</span><h2 id="qt-${q.id}"></h2></div>${q.why?'<p class="why"></p>':''}<div class="opts" role="radiogroup"></div><textarea class="note" id="note-${q.id}" rows="1" placeholder="ひとこと（なくても大丈夫）"></textarea>`;
+  el.querySelector('h2').textContent=q.t;if(q.why)el.querySelector('.why').textContent=q.why;
+  el.querySelector('.opts').setAttribute('aria-labelledby','qt-'+q.id);
+  q.o.forEach(([k,label,sub,rec])=>{const b=document.createElement('button');b.type='button';b.className='opt';b.setAttribute('role','radio');b.dataset.k=k;
+    b.innerHTML=`<span class="dot" aria-hidden="true"></span><span class="tx"><b></b>${sub?'<small></small>':''}</span>`;
+    b.querySelector('b').textContent=k+'　'+label;if(rec){const r=document.createElement('span');r.className='rec';r.textContent='おすすめ';b.querySelector('b').append(r)}
+    if(sub)b.querySelector('small').textContent=sub;
+    b.addEventListener('click',()=>{ans[q.id]=Object.assign({},ans[q.id],{c:k});changed(q.id)});el.querySelector('.opts').append(b)});
+  const ta=el.querySelector('.note');let tm;ta.addEventListener('input',()=>{ans[q.id]=Object.assign({},ans[q.id],{n:ta.value.slice(0,500)});clearTimeout(tm);tm=setTimeout(()=>changed(q.id,true),800)});
+  qs.append(el);
+});
+function render(){let n=0;Q.forEach(q=>{const a=ans[q.id]||{},el=document.getElementById('q-'+q.id);if(a.c)n++;el.classList.toggle('done',!!a.c);
+  el.querySelectorAll('.opt').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.k===a.c)));
+  const ta=el.querySelector('.note');if(document.activeElement!==ta)ta.value=a.n||''});
+  document.getElementById('cnt').textContent=n+' / '+N;document.getElementById('fill').style.width=(n/N*100)+'%'}
+function summary(){return ['【スターターパック案への回答】'].concat(Q.map((q,i)=>{const a=ans[q.id]||{},o=q.o.find(x=>x[0]===a.c);
+  return `${i+1}. ${q.t}\n　→ ${o?o[0]+' '+o[1]:'（未回答）'}${a.n?'\n　ひとこと：'+a.n:''}`})).join('\n')}
+const stateEl=document.getElementById('state');
+function setState(t,ok){stateEl.textContent=t;stateEl.classList.toggle('ok',!!ok)}
+let db=null,docRef=null,canWrite=null,saving=false,pending=false;
+function changed(id,quiet){try{localStorage.setItem('pq-draft',JSON.stringify(ans))}catch(e){}render();
+  if(!quiet){const i=Q.findIndex(q=>q.id===id),next=Q.slice(i+1).find(q=>!(ans[q.id]||{}).c);if(next){const el=document.getElementById('q-'+next.id);
+    el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})}}
+  save()}
+async function save(){if(!docRef||canWrite===false)return;if(saving){pending=true;return}saving=true;setState('保存しています…');
+  try{await docRef.set({answers:ans,updatedAt:new Date().toISOString()});setState('保存しました。こちらで答えを読み取れます',true)}
+  catch(e){if(e&&e.code==='invalid_argument'){canWrite=false;setState('このページでは保存できません。「答えをコピー」で送ってください')}else setState('保存できませんでした。「答えをコピー」で送ってください')}
+  saving=false;if(pending){pending=false;save()}}
+document.getElementById('copy').addEventListener('click',async()=>{const t=summary(),box=document.getElementById('copybox');
+  try{await navigator.clipboard.writeText(t);setState('コピーしました。LINEやメールに貼りつけて送ってください',true)}
+  catch(e){box.value=t;box.classList.add('show');box.focus();box.select();setState('下の文章を選んでコピーしてください')}});
+render();
+(async()=>{try{
+  if(!window.claude||!window.claude.use)return;
+  const [d,u]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);if(!d)return;
+  db=d;docRef=db.doc('answers/main');
+  if(u){try{const w=await u.can('data.write');if(w===false){canWrite=false;setState('このページでは保存できません。答え終わったら「答えをコピー」で送ってください')}}catch(e){}}
+  let first=true;const timer=setTimeout(()=>{if(first)setState('保存先につながりません。「答えをコピー」で送ってください')},10000);
+  docRef.onSnapshot(s=>{if(!s.metadata.fromCache)clearTimeout(timer);
+    if(first&&s.exists){first=false;const a=(s.data()||{}).answers;if(a&&typeof a==='object'){
+      // 保存されている答えを基本にし、この端末で入れた分は上書きしない
+      ans=Object.assign({},a,ans);render();if(canWrite!==false)setState('前回の答えを読みこみました',true)}}
+    else if(first&&!s.metadata.fromCache){first=false}},()=>{clearTimeout(timer)});
+}catch(e){}})();
+})();
+</script>
