@@ -158,8 +158,6 @@ const FORMS={
   opts:[['A','✍️','先生が用意する'],['B','🤖','こちらで下書き→\n先生が確かめる\n（★おすすめ）']]},
  {sec:'make',id:'login',s:'ログインのやり方',t:'ログインのやり方はどうしますか？',sub:'集めたカードを授業をまたいで残すために、生徒ごとの記録が要ります。本名やメールは使わない形にしたいです',other:1,
   opts:[['A','🔑','先生がIDと\n4けたの番号を配る\n（★おすすめ）'],['B','🌐','Googleアカウント\nで入る'],['C','📱','ログインなし\n（端末にだけ残す）']]},
- {sec:'make',id:'cheat',s:'ズル対策',t:'ズル（持ち物の書きかえ）への対策は？',sub:'詳しい生徒なら手持ちを書きかえられます。きちんと防ぐにはサーバーの仕組みを足します（クラス1つ分ならほぼ無料の範囲）',other:1,
-  opts:[['A','🧪','試すあいだは\n気にしない\n（★おすすめ）'],['B','🛡️','最初から\nきちんと防ぐ']]},
  {sec:'make',id:'plan',s:'作る順番',t:'どんな順番で作りますか？',other:1,
   opts:[['A','🐣','まずログインなしで\n1回の授業だけ試す\n（★おすすめ）'],['B','🏗️','最初から\nログイン・記録つき']]},
  {sec:'make',id:'memo',s:'ほかに伝えたいこと',t:'ほかに伝えたいことはありますか？',type:'text',sub:'パックの中身の案、遊び方のこだわりなど。なければ空欄のまま次へ',ph:'例：戦争パックには〇〇も入れたい'},
@@ -237,7 +235,7 @@ function render(){
 function intro(){
   document.body.classList.add('retro');
   screen.innerHTML=`<div class="rt">
-    <marquee scrollamount="5">★☆★ ようこそいらっしゃいました！！ カードゲーム制作委員会 公式ホームページへ ★☆★ アンケート第2弾 スターターパック編 公開しました！！ ご協力お願いいたします m(_ _)m ★☆★</marquee>
+    <marquee scrollamount="5">★☆★ ようこそいらっしゃいました！！ カードゲーム制作委員会 公式ホームページへ ★☆★ アンケート第2弾 スターターパック編 公開しました！！ ご協力お願いいたします m(_ _)m ★☆★ 試作置き場もオープン！ コンピュータと対戦できます ★☆★</marquee>
     <div class="since">Since 2026.11.19 ／ 最終更新：2026.11.26</div>
     <div class="logo">★カードゲーム★<br>制作委員会</div>
     <div class="catch">～アイデア、聞かせてください～</div>
@@ -249,7 +247,7 @@ function intro(){
       <tr><td class="h">▼ M E N U ▼</td></tr>
       <tr><td>◆ <a id="go2">アンケート第2弾 スターターパック編</a><span class="new blink">NEW!</span></td></tr>
       <tr><td>◆ <a id="go1">アンケート第1弾 事前アンケート</a></td></tr>
-      <tr><td>◆ <a class="dead" data-m="試作置き場は工事中です。完成までもうしばらくお待ちください">試作置き場</a>（工事中）</td></tr>
+      <tr><td>◆ <a href="https://claude.ai/artifact/VvhVthNoG7FuyWVaeYsr4L" target="_blank" rel="noopener">試作置き場</a><span class="new blink">NEW!</span><br><span style="font-size:11px;color:#9cf">　年号ならべバトルをコンピュータと対戦できます</span></td></tr>
     </table>
     <div class="msg2" id="m2"></div>
     <button class="enter" id="st">≫≫ 第2弾アンケートに入る ≪≪</button>
